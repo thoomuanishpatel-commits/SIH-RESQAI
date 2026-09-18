@@ -36,11 +36,15 @@ export const SosModal: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  const [cameraPermissionStatus, setCameraPermissionStatus] = useState<'IDLE' | 'PROMPTING' | 'GRANTED' | 'DENIED' | 'UNSUPPORTED'>('IDLE');
+  const [cameraError, setCameraError] = useState<string | null>(null);
+
   useEffect(() => {
     if (sosModalOpen) {
       setStep('CONFIRM');
       setProgressStage(0);
       setLegalConfirmed(false);
+      setCameraError(null);
       startCamera();
     } else {
       stopCamera();
@@ -50,22 +54,68 @@ export const SosModal: React.FC = () => {
     };
   }, [sosModalOpen]);
 
-  const startCamera = async () => {
-    try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 360 } },
-          audio: false
-        });
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play().catch(() => {});
-        }
-        setCameraActive(true);
+  // Connect video element whenever videoRef or stream changes
+  useEffect(() => {
+    if (cameraActive && streamRef.current && videoRef.current) {
+      const video = videoRef.current;
+      if (video.srcObject !== streamRef.current) {
+        video.srcObject = streamRef.current;
       }
-    } catch (e) {
-      console.warn('Camera permission denied or unavailable in SOS modal');
+      video.play().catch(err => {
+        console.warn('Auto-play blocked, retrying on user interaction:', err);
+      });
+    }
+  }, [cameraActive]);
+
+  const startCamera = async () => {
+    if (typeof window === 'undefined') return;
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setCameraPermissionStatus('UNSUPPORTED');
+      setCameraError('Webcam API is not supported in this browser environment.');
+      setCameraActive(false);
+      return;
+    }
+
+    setCameraPermissionStatus('PROMPTING');
+    setCameraError(null);
+
+    // Try front camera first, with broad fallback constraints if facingMode: 'user' fails
+    const constraintsList = [
+      { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false },
+      { video: { facingMode: 'user' }, audio: false },
+      { video: true, audio: false }
+    ];
+
+    let stream: MediaStream | null = null;
+    let lastError: any = null;
+
+    for (const constraints of constraintsList) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        if (stream) break;
+      } catch (err: any) {
+        lastError = err;
+      }
+    }
+
+    if (stream) {
+      streamRef.current = stream;
+      setCameraPermissionStatus('GRANTED');
+      setCameraActive(true);
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(e => console.warn('Video play catch:', e));
+      }
+    } else {
+      console.warn('Camera permission denied or unavailable:', lastError);
+      setCameraPermissionStatus('DENIED');
+      setCameraError(
+        lastError?.name === 'NotAllowedError' || lastError?.name === 'PermissionDeniedError'
+          ? 'Camera permission denied in browser. Click "Enable Camera" or allow access in the address bar.'
+          : 'Webcam is currently occupied or unavailable on this device.'
+      );
       setCameraActive(false);
     }
   };
@@ -76,6 +126,7 @@ export const SosModal: React.FC = () => {
       streamRef.current = null;
     }
     setCameraActive(false);
+    setCameraPermissionStatus('IDLE');
   };
 
   const stages = [
@@ -301,25 +352,61 @@ export const SosModal: React.FC = () => {
                     <Camera className="w-3.5 h-3.5" />
                     ANTI-HOAX IDENTITY CAPTURE
                   </span>
-                  <span className="text-[10px] text-emerald-400">
-                    {cameraActive ? 'FRONT CAM ON' : 'DEVICE TOKEN'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-bold ${cameraActive ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      {cameraActive ? '● FRONT CAM ON' : 'CAMERA STANDBY'}
+                    </span>
+                    {!cameraActive && (
+                      <button
+                        type="button"
+                        onClick={startCamera}
+                        className="px-2 py-0.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-mono font-bold transition cursor-pointer"
+                      >
+                        Enable Camera
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                <div className="w-full h-32 bg-slate-900 rounded-lg overflow-hidden relative flex items-center justify-center border border-slate-800">
-                  {cameraActive ? (
-                    <video
-                      ref={videoRef}
-                      playsInline
-                      muted
-                      autoPlay
-                      className="w-full h-full object-cover mirror transform -scale-x-100"
-                    />
-                  ) : (
-                    <div className="text-center p-2 text-slate-400 text-xs font-mono">
-                      <span>Camera scanning ready • Device fingerprint active</span>
+                <div className="w-full h-36 bg-slate-900 rounded-lg overflow-hidden relative flex items-center justify-center border border-slate-800">
+                  {/* Keep video in DOM at all times so ref is never lost */}
+                  <video
+                    ref={videoRef}
+                    playsInline
+                    muted
+                    autoPlay
+                    className={`w-full h-full object-cover transform -scale-x-100 ${cameraActive ? 'block' : 'hidden'}`}
+                  />
+
+                  {/* If camera is not active or blocked, show interactive troubleshooting overlay */}
+                  {!cameraActive && (
+                    <div className="text-center p-3 text-slate-300 text-xs font-mono space-y-2 max-w-[280px]">
+                      <div className="w-9 h-9 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center mx-auto">
+                        <Camera className="w-4 h-4" />
+                      </div>
+                      <div className="font-bold text-white text-xs">
+                        {cameraPermissionStatus === 'PROMPTING' ? 'Requesting Camera Access...' : 'Camera Access Needed'}
+                      </div>
+                      <p className="text-[10px] text-slate-400 leading-tight">
+                        {cameraError || 'Tap "Enable Camera" or click the camera icon in your browser URL bar to allow preview.'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={startCamera}
+                        className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold shadow transition"
+                      >
+                        Tap to Activate Camera
+                      </button>
                     </div>
                   )}
+
+                  {cameraActive && (
+                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 backdrop-blur-sm border border-emerald-500/40 text-[9px] font-mono text-emerald-300 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>LIVE FACIAL STREAM</span>
+                    </div>
+                  )}
+
                   <div className="absolute inset-0 border border-blue-500/30 rounded-lg pointer-events-none" />
                 </div>
               </div>
