@@ -483,16 +483,25 @@ export const LiveResponseMap: React.FC<LiveResponseMapProps> = ({
       } else {
         // Smoothly update position
         existingMarker.setLngLat([veh.longitude, veh.latitude]);
-        // Update rotation heading
-        const iconEl = existingMarker.getElement().querySelector('.vehicle-icon-inner') as HTMLElement;
-        if (iconEl) {
-          iconEl.style.transform = `rotate(${veh.heading}deg)`;
+        // Update rotation heading arrow
+        const arrowEl = existingMarker.getElement().querySelector('.vehicle-heading-arrow') as HTMLElement;
+        if (arrowEl) {
+          arrowEl.style.transform = `rotate(${veh.heading}deg)`;
+          arrowEl.style.display = veh.speed > 0 ? 'block' : 'none';
         }
-        // Update status ring
+        // Update speed label
+        const speedEl = existingMarker.getElement().querySelector('.vehicle-speed-val') as HTMLElement;
+        if (speedEl) {
+          speedEl.textContent = veh.speed > 0 ? `${Math.round(veh.speed)}k` : '';
+        }
+        // Update selection highlight
+        const podEl = existingMarker.getElement().querySelector('.vehicle-pod') as HTMLElement;
         if (selectedVehicle?.id === veh.id) {
-          existingMarker.getElement().classList.add('ring-4', 'ring-blue-400/70');
+          existingMarker.getElement().classList.add('scale-125', 'z-50');
+          podEl?.classList.add('ring-4', 'ring-cyan-400', 'shadow-[0_0_25px_rgba(34,211,238,0.9)]');
         } else {
-          existingMarker.getElement().classList.remove('ring-4', 'ring-blue-400/70');
+          existingMarker.getElement().classList.remove('scale-125', 'z-50');
+          podEl?.classList.remove('ring-4', 'ring-cyan-400', 'shadow-[0_0_25px_rgba(34,211,238,0.9)]');
         }
       }
     });
@@ -626,52 +635,203 @@ function createIncidentMarkerSvg(inc: LiveIncident): string {
   `;
 }
 
-// Custom Vehicle Marker HTML generator
+// Custom Tactical Vehicle Marker HTML generator
 function createVehicleMarkerHtml(veh: LiveVehicle): string {
-  const icon =
-    veh.vehicle_type === 'FIRE'
-      ? '🚒'
-      : veh.vehicle_type === 'AMBULANCE'
-      ? '🚑'
-      : veh.vehicle_type === 'POLICE'
-      ? '🚓'
-      : veh.vehicle_type === 'RELIEF'
-      ? '🛟'
-      : '🚁';
+  let themeColor = '#3b82f6';
+  let typeLabel = 'PATROL';
+  let iconSvg = '';
 
+  switch (veh.vehicle_type) {
+    case 'FIRE':
+      themeColor = '#ef4444';
+      typeLabel = 'FIRE RESCUE';
+      iconSvg = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${themeColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="5" width="14" height="11" rx="2" fill="rgba(239, 68, 68, 0.2)"/>
+          <path d="M16 9h3.5l2.5 3v4h-6V9z" fill="rgba(239, 68, 68, 0.2)"/>
+          <circle cx="6.5" cy="17.5" r="2.2" fill="${themeColor}"/>
+          <circle cx="17.5" cy="17.5" r="2.2" fill="${themeColor}"/>
+          <path d="M6 2.5h8M10 1v3"/>
+        </svg>
+      `;
+      break;
+    case 'AMBULANCE':
+      themeColor = '#10b981';
+      typeLabel = 'EMS / AMBULANCE';
+      iconSvg = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${themeColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="5" width="14" height="11" rx="2" fill="rgba(16, 185, 129, 0.2)"/>
+          <path d="M16 9h3.5l2.5 3v4h-6V9z" fill="rgba(16, 185, 129, 0.2)"/>
+          <circle cx="6.5" cy="17.5" r="2.2" fill="${themeColor}"/>
+          <circle cx="17.5" cy="17.5" r="2.2" fill="${themeColor}"/>
+          <path d="M9 8v5M6.5 10.5h5"/>
+        </svg>
+      `;
+      break;
+    case 'POLICE':
+      themeColor = '#3b82f6';
+      typeLabel = 'POLICE INTERCEPTOR';
+      iconSvg = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${themeColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="rgba(59, 130, 246, 0.2)"/>
+          <path d="M12 7v5M9.5 9.5h5"/>
+        </svg>
+      `;
+      break;
+    case 'RELIEF':
+      themeColor = '#f59e0b';
+      typeLabel = 'RESCUE / RELIEF';
+      iconSvg = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${themeColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9" fill="rgba(245, 158, 11, 0.2)"/>
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/>
+        </svg>
+      `;
+      break;
+    case 'DRONE':
+    default:
+      themeColor = '#06b6d4';
+      typeLabel = 'RECON DRONE';
+      iconSvg = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${themeColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3" fill="${themeColor}"/>
+          <path d="M6 6l4 4M18 6l-4 4M6 18l4-4M18 18l-4-4"/>
+          <circle cx="5" cy="5" r="2.2"/>
+          <circle cx="19" cy="5" r="2.2"/>
+          <circle cx="5" cy="19" r="2.2"/>
+          <circle cx="19" cy="19" r="2.2"/>
+        </svg>
+      `;
+      break;
+  }
+
+  const isResponding = veh.status === 'RESPONDING' || veh.status === 'DISPATCHED';
+  const isOnScene = veh.status === 'ON_SCENE';
+  const statusDotColor = isOnScene ? '#22c55e' : isResponding ? '#38bdf8' : '#94a3b8';
   const isMoving = veh.speed > 0;
-  const statusColor = veh.status === 'RESPONDING' ? '#38bdf8' : veh.status === 'ON_SCENE' ? '#22c55e' : '#94a3b8';
 
   return `
-    <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
-      <div class="vehicle-icon-inner" style="
-        width: 36px;
-        height: 36px;
+    <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+      <!-- Hover Tactical Tooltip HUD -->
+      <div class="vehicle-tooltip" style="
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(9, 13, 22, 0.96);
+        backdrop-filter: blur(8px);
+        border: 1px solid ${themeColor}88;
+        border-radius: 8px;
+        padding: 6px 10px;
+        box-shadow: 0 12px 30px -4px rgba(0,0,0,0.85), 0 0 16px ${themeColor}40;
+        z-index: 60;
+        pointer-events: none;
+        min-width: 145px;
+        text-align: left;
+      ">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; border-bottom: 1px solid rgba(51, 65, 85, 0.4); padding-bottom: 3px; margin-bottom: 4px;">
+          <span style="font-family: monospace; font-weight: 900; font-size: 10px; color: ${themeColor}; letter-spacing: 0.5px;">${veh.vehicle_code}</span>
+          <span style="font-size: 8px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">${typeLabel}</span>
+        </div>
+        <div style="font-size: 9px; color: #cbd5e1; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+          <span style="color: ${statusDotColor};">●</span>
+          <span>${veh.status.replace('_', ' ')}</span>
+          ${isMoving ? `<span style="color: #64748b; font-family: monospace;">(${Math.round(veh.speed)} km/h)</span>` : ''}
+        </div>
+        <div style="font-size: 8px; color: #64748b; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 165px;">
+          📍 ${veh.baseStation}
+        </div>
+        ${veh.assigned_incident_id ? `
+        <div style="font-size: 8px; color: #38bdf8; margin-top: 2px; font-family: monospace;">
+          Target: #${veh.assigned_incident_id} ${veh.etaString ? `• ETA ${veh.etaString}` : ''}
+        </div>
+        ` : ''}
+        <div style="
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 0;
+          height: 0;
+          border-left: 5px solid transparent;
+          border-right: 5px solid transparent;
+          border-top: 5px solid rgba(9, 13, 22, 0.96);
+        "></div>
+      </div>
+
+      <!-- Heading Directional Arrow (Rotates with vehicle heading) -->
+      <div class="vehicle-heading-arrow" style="
+        position: absolute;
+        top: -6px;
+        left: 50%;
+        margin-left: -4px;
+        width: 0;
+        height: 0;
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-bottom: 7px solid ${themeColor};
+        filter: drop-shadow(0 -1px 3px ${themeColor});
+        transform-origin: 4px 24px;
+        transform: rotate(${veh.heading}deg);
+        display: ${isMoving ? 'block' : 'none'};
+        z-index: 5;
+      "></div>
+
+      <!-- Tactical Pulse Radar Wave (Responding Units) -->
+      ${isResponding ? `
+      <div class="tactical-pulse-ring" style="
+        border: 2px solid ${themeColor};
+      "></div>
+      ` : ''}
+
+      <!-- Main Tactical Pod -->
+      <div class="vehicle-pod ${isResponding ? 'tactical-siren-flash' : ''}" style="
+        width: 38px;
+        height: 38px;
         border-radius: 10px;
-        background: #090d16;
-        border: 2px solid ${statusColor};
+        background: radial-gradient(circle at center, #0f172a 0%, #030712 100%);
+        border: 2px solid ${themeColor};
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 18px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.6);
-        transition: transform 0.3s ease;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.8), 0 0 10px ${themeColor}44, inset 0 0 8px ${themeColor}22;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        position: relative;
+        z-index: 2;
       ">
-        ${icon}
+        <div class="vehicle-icon-inner" style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 100%;
+        ">
+          ${iconSvg}
+        </div>
       </div>
+
+      <!-- Monospace Callsign & Telemetry Badge -->
       <div style="
-        background: #0f172a;
-        color: ${statusColor};
-        border: 1px solid ${statusColor};
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        background: rgba(9, 13, 22, 0.95);
+        border: 1px solid ${themeColor}99;
         border-radius: 4px;
-        padding: 0 4px;
-        font-size: 8px;
-        font-weight: 900;
+        padding: 1px 4px;
         font-family: monospace;
-        margin-top: 2px;
+        font-size: 8px;
+        font-weight: 800;
+        color: #f8fafc;
+        margin-top: 3px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.85);
         white-space: nowrap;
+        z-index: 2;
       ">
-        ${veh.vehicle_code}
+        <span style="width: 5px; height: 5px; border-radius: 50%; background: ${statusDotColor}; display: inline-block;"></span>
+        <span>${veh.vehicle_code}</span>
+        <span class="vehicle-speed-val" style="color: ${themeColor}; opacity: 0.95; font-size: 7.5px;">${isMoving ? `${Math.round(veh.speed)}k` : ''}</span>
       </div>
     </div>
   `;

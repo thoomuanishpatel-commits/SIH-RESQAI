@@ -245,3 +245,62 @@ button, input, optgroup, select, textarea, a, p, span {
   animation: marquee 28s linear infinite;
 }
 
+/* Tactical Emergency Vehicle Map Markers */
+@keyframes tactical-pulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.85;
+  }
+  70% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+}
+
+@keyframes tactical-siren-flash {
+  0%, 100% {
+    box-shadow: 0 0 14px rgba(239, 68, 68, 0.9), 0 0 24px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(59, 130, 246, 0.9), 0 0 28px rgba(59, 130, 246, 0.5);
+  }
+}
+
+.tactical-pulse-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+  pointer-events: none;
+  animation: tactical-pulse 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.tactical-siren-flash {
+  animation: tactical-siren-flash 1.2s ease-in-out infinite;
+}
+
+.resqai-vehicle-marker {
+  position: relative;
+  z-index: 25;
+}
+
+.resqai-vehicle-marker:hover {
+  z-index: 50;
+}
+
+.resqai-vehicle-marker .vehicle-tooltip {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px) scale(0.95);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.resqai-vehicle-marker:hover .vehicle-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
