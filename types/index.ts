@@ -293,6 +293,7 @@ export interface DisasterReport {
     signedUrl?: string;
     previewUrl?: string;
     anonymizedPreviewUrl?: string;
+    facePrivacyApplied?: boolean;
     mediaType: string;
     uploadedAt: string;
   };

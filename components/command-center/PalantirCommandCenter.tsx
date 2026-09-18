@@ -49,7 +49,10 @@ import {
   Crosshair,
   Navigation,
   Car,
-  ShieldCheck
+  ShieldCheck,
+  Camera,
+  Eye,
+  Image as ImageIcon
 } from 'lucide-react';
 import { useEmergency } from '@/context/EmergencyContext';
 import { Incident, EmergencyUnit, Hospital, ReliefShelter, RoadBlock, IncidentSeverity } from '@/types';
@@ -103,7 +106,8 @@ export const PalantirCommandCenter: React.FC = () => {
     setPortalMode,
     logoutAdmin,
     isAdminAuthenticated,
-    setAdminAuthModalOpen
+    setAdminAuthModalOpen,
+    disasterReports
   } = useEmergency();
 
   // 1. Theme & UI State
@@ -113,6 +117,34 @@ export const PalantirCommandCenter: React.FC = () => {
   const [rightDrawerOpen, setRightDrawerOpen] = useState<boolean>(true);
   const [rightDrawerWidth, setRightDrawerWidth] = useState<number>(440);
   const isResizingRef = useRef(false);
+
+  // Evidence Image Lightbox & Privacy State
+  const [selectedEvidenceImage, setSelectedEvidenceImage] = useState<string | null>(null);
+  const [showAnonymized, setShowAnonymized] = useState<boolean>(true);
+
+  // Memoize matching report and photo evidence for selectedIncident
+  const matchingReport = useMemo(() => {
+    if (!selectedIncident) return null;
+    return disasterReports?.find(
+      r => r.id === selectedIncident.id ||
+           (selectedIncident.tokenNumber && r.id === selectedIncident.tokenNumber) ||
+           r.id.toLowerCase() === selectedIncident.id.toLowerCase()
+    );
+  }, [selectedIncident, disasterReports]);
+
+  const evidencePhoto = useMemo(() => {
+    if (!selectedIncident) return null;
+    if (showAnonymized && matchingReport?.evidence?.anonymizedPreviewUrl) {
+      return matchingReport.evidence.anonymizedPreviewUrl;
+    }
+    return (
+      selectedIncident.photoUrl ||
+      selectedIncident.verificationPhotoUrl ||
+      matchingReport?.evidence?.previewUrl ||
+      matchingReport?.evidence?.anonymizedPreviewUrl ||
+      null
+    );
+  }, [selectedIncident, matchingReport, showAnonymized]);
 
   // 2. Simulation & Autopilot State
   const [isSimRunning, setIsSimRunning] = useState<boolean>(true);
@@ -842,6 +874,77 @@ export const PalantirCommandCenter: React.FC = () => {
                             <strong className="text-emerald-400">{selectedIncident.status}</strong>
                           </div>
                         </div>
+
+                        {/* Citizen Submitted Distress Evidence Photo HUD */}
+                        <div className="rounded-xl overflow-hidden border border-cyan-500/30 bg-black/60 p-2.5 space-y-2">
+                          <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400">
+                            <span className="flex items-center gap-1.5 text-cyan-300 font-bold tracking-wider">
+                              <Camera className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                              CITIZEN EVIDENCE TRANSMISSION
+                            </span>
+                            {evidencePhoto ? (
+                              <div className="flex items-center gap-1.5">
+                                {matchingReport?.evidence?.facePrivacyApplied && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowAnonymized(prev => !prev)}
+                                    className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors ${
+                                      showAnonymized 
+                                        ? 'bg-amber-950/80 text-amber-300 border-amber-800' 
+                                        : 'bg-zinc-800 text-zinc-300 border-zinc-700'
+                                    }`}
+                                    title="Toggle Face Privacy Anonymization"
+                                  >
+                                    {showAnonymized ? 'PRIVACY BLUR ON' : 'RAW EVIDENCE'}
+                                  </button>
+                                )}
+                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-bold">
+                                  ATTACHED
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-500 border border-zinc-800 font-mono">
+                                NO MEDIA
+                              </span>
+                            )}
+                          </div>
+
+                          {evidencePhoto ? (
+                            <div
+                              onClick={() => setSelectedEvidenceImage(evidencePhoto)}
+                              className="relative rounded-lg overflow-hidden h-44 bg-zinc-950 border border-cyan-500/40 cursor-pointer group hover:border-cyan-300 transition-all flex items-center justify-center"
+                            >
+                              <img
+                                src={evidencePhoto}
+                                alt="Citizen distress evidence"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/20 pointer-events-none" />
+                              
+                              <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-mono text-cyan-300 border border-cyan-500/40 flex items-center gap-1 shadow-md">
+                                <Eye className="w-3 h-3 text-cyan-400" />
+                                <span>EXPAND FULL RES</span>
+                              </div>
+
+                              <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[10px] font-mono text-zinc-300 pointer-events-none">
+                                <span className="bg-black/85 px-2 py-0.5 rounded text-cyan-300 border border-cyan-900/50">
+                                  CAMERA FEED
+                                </span>
+                                <span className="text-emerald-400 font-bold bg-black/85 px-2 py-0.5 rounded border border-emerald-900/50">
+                                  TELEMETRY ATTACHED
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-3 rounded-lg bg-zinc-950/60 border border-dashed border-zinc-800/80 flex items-center justify-between text-[10px] font-mono text-zinc-500">
+                              <span className="flex items-center gap-1.5">
+                                <Camera className="w-3.5 h-3.5 text-zinc-600" />
+                                <span>No citizen distress photo uploaded for this ticket</span>
+                              </span>
+                              <span className="text-[9px] text-zinc-600 uppercase">TELEMETRY ONLY</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Recommended Tactical Units Selector */}
@@ -1279,6 +1382,58 @@ export const PalantirCommandCenter: React.FC = () => {
               >
                 Confirm Sign Out
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* 6. TACTICAL HIGH-RES EVIDENCE LIGHTBOX MODAL                 */}
+      {/* ============================================================ */}
+      {selectedEvidenceImage && (
+        <div
+          onClick={() => setSelectedEvidenceImage(null)}
+          className="fixed inset-0 z-[2000] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 cursor-zoom-out animate-in fade-in duration-200"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()} 
+            className="relative max-w-4xl w-full max-h-[88vh] bg-zinc-950 border border-cyan-500/50 rounded-2xl overflow-hidden shadow-2xl flex flex-col cursor-default"
+          >
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 bg-zinc-900/90 font-mono text-xs text-zinc-300">
+              <div className="flex items-center gap-2">
+                <Camera className="w-4 h-4 text-cyan-400 animate-pulse" />
+                <span className="font-black text-white tracking-wider">TACTICAL EVIDENCE TELEMETRY</span>
+                {selectedIncident && (
+                  <span className="text-cyan-400 font-mono bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800/80">
+                    [{selectedIncident.id}]
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => setSelectedEvidenceImage(null)}
+                className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                title="Close Lightbox"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="relative flex-1 bg-black flex items-center justify-center overflow-auto p-4 min-h-[300px]">
+              <img
+                src={selectedEvidenceImage}
+                alt="High-resolution tactical distress evidence"
+                className="max-h-[68vh] w-auto max-w-full object-contain rounded-xl border border-zinc-800 shadow-2xl"
+              />
+            </div>
+            
+            <div className="px-5 py-3 border-t border-zinc-800 bg-zinc-950 flex items-center justify-between font-mono text-[11px] text-zinc-400">
+              <span className="truncate max-w-md">
+                INCIDENT: <strong className="text-zinc-200">{selectedIncident?.title || 'TACTICAL EVIDENCE'}</strong>
+              </span>
+              <span className="text-emerald-400 font-bold flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                SECURE EVIDENCE ARCHIVE
+              </span>
             </div>
           </div>
         </div>

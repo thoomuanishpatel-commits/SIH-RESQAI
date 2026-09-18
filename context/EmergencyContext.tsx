@@ -432,7 +432,7 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
 
   const createIncident = useCallback((data: Partial<Incident>): string => {
-    const newId = generateIncidentId();
+    const newId = data.id || generateIncidentId();
 
     // Automatically resolve to real live user GPS coordinates
     const resolvedLocation: LocationCoords = data.location || (
@@ -453,6 +453,7 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const newIncident: Incident = {
       id: newId,
+      tokenNumber: data.tokenNumber || newId,
       type: data.type || 'HAZARD',
       title: data.title || 'Reported Emergency',
       description: data.description || 'Emergency assistance requested immediately.',
@@ -472,7 +473,8 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         sentimentUrgency: 98
       },
       reporter: data.reporter,
-      photoUrl: data.photoUrl,
+      photoUrl: data.photoUrl || data.verificationPhotoUrl,
+      verificationPhotoUrl: data.verificationPhotoUrl || data.photoUrl,
       audioTranscript: data.audioTranscript
     };
 
