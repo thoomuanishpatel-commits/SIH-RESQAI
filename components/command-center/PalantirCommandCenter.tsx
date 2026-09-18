@@ -44,7 +44,12 @@ import {
   MapPin,
   HeartPulse,
   Share2,
-  Download
+  Download,
+  Siren,
+  Crosshair,
+  Navigation,
+  Car,
+  ShieldCheck
 } from 'lucide-react';
 import { useEmergency } from '@/context/EmergencyContext';
 import { Incident, EmergencyUnit, Hospital, ReliefShelter, RoadBlock, IncidentSeverity } from '@/types';
@@ -675,122 +680,244 @@ export const PalantirCommandCenter: React.FC = () => {
             {/* Drawer Body Scrollable Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               
-              {/* TAB 1: TACTICAL DISPATCH CONSOLE */}
+              {/* TAB 1: TACTICAL DISPATCH CONSOLE (UPGRADED HIGH-TECH HUD GRAPHICS) */}
               {activeTab === 'dispatch' && (
                 <div className="space-y-4">
-                  {/* Active Incident Queue (Citizen reports immediately appear here) */}
+                  {/* Top HUD Status Bar with Radar Grid */}
+                  <div className="p-3 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-zinc-900/80 to-blue-950/40 border border-cyan-500/30 backdrop-blur-md shadow-lg shadow-cyan-950/20 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
+                    <div className="flex items-center justify-between relative z-10">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shadow-inner shadow-cyan-500/30">
+                          <Radio className="w-3.5 h-3.5 animate-pulse" />
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-mono font-black tracking-widest text-cyan-300 uppercase">
+                            TACTICAL CAD DISPATCH FEED
+                          </div>
+                          <div className="text-[9px] font-mono text-zinc-400">
+                            Telemetry Engine: 100% Synced &bull; Sub-second Ping
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[9px] font-mono font-bold text-emerald-400">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                          ONLINE
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Active Incident Queue (Citizen reports queue) */}
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between text-[10px] uppercase font-bold text-zinc-400">
-                      <span>Live Citizen Disasters Queue ({incidents.filter(i => i.status !== 'RESOLVED').length}):</span>
-                      <span className="text-cyan-400 font-mono">100% Synced</span>
+                    <div className="flex items-center justify-between text-[10px] uppercase font-bold text-zinc-400 px-1">
+                      <span className="flex items-center gap-1.5">
+                        <Flame className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+                        <span>Live Citizen Disasters Queue ({incidents.filter(i => i.status !== 'RESOLVED').length})</span>
+                      </span>
+                      <span className="text-cyan-400 font-mono tracking-wider text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
+                        AUTOMATIC CLUSTERING
+                      </span>
                     </div>
 
-                    <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                    <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
                       {incidents.filter(i => i.status !== 'RESOLVED').map(inc => {
                         const isSelected = selectedIncident?.id === inc.id;
                         return (
                           <div
                             key={inc.id}
                             onClick={() => setSelectedIncident(inc)}
-                            className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                            className={`p-3 rounded-2xl border transition-all cursor-pointer relative overflow-hidden group ${
                               isSelected
-                                ? 'bg-cyan-950/80 border-cyan-500 shadow-md ring-1 ring-cyan-500/40 text-white'
-                                : 'bg-zinc-900/90 border-zinc-800/90 hover:border-zinc-700 text-zinc-300'
+                                ? 'bg-gradient-to-br from-cyan-950/90 via-zinc-900 to-blue-950/80 border-cyan-400 shadow-xl shadow-cyan-950/50 ring-1 ring-cyan-400/50'
+                                : 'bg-zinc-950/70 border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-900/60'
                             }`}
                           >
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5">
-                                <span className={`w-2 h-2 rounded-full ${inc.severity === 'CRITICAL' ? 'bg-rose-500 animate-pulse' : 'bg-amber-400'}`} />
-                                <span className="text-xs font-bold font-mono text-cyan-300 truncate">{inc.id}</span>
-                                <span className="text-[10px] text-zinc-400 font-mono">• {inc.type}</span>
-                              </div>
-                              <p className="text-[11px] font-medium text-slate-200 truncate mt-0.5">{inc.title}</p>
-                              <p className="text-[10px] text-zinc-400 truncate">📍 {inc.location.address}</p>
-                            </div>
+                            {/* Left accent indicator bar */}
+                            <div
+                              className={`absolute left-0 top-0 bottom-0 w-1 ${
+                                inc.severity === 'CRITICAL'
+                                  ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]'
+                                  : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]'
+                              }`}
+                            />
 
-                            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold uppercase shrink-0 ${
-                              inc.status === 'DISPATCHED' || inc.status === 'ON_SCENE'
-                                ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                                : 'bg-rose-950 text-rose-300 border border-rose-800'
-                            }`}>
-                              {inc.status}
-                            </span>
+                            <div className="flex items-start justify-between gap-2 pl-2">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                                  <span className="text-xs font-black font-mono tracking-wider text-cyan-300">
+                                    {inc.id}
+                                  </span>
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300 font-mono border border-zinc-700">
+                                    {inc.type}
+                                  </span>
+                                </div>
+                                <h4 className="text-xs font-bold text-white truncate mt-1 group-hover:text-cyan-200 transition">
+                                  {inc.title}
+                                </h4>
+                                <div className="text-[10px] text-zinc-400 truncate flex items-center gap-1 mt-0.5 font-mono">
+                                  <MapPin className="w-3 h-3 text-cyan-400 shrink-0" />
+                                  <span>{inc.location.address}</span>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                <span className={`text-[9px] font-mono px-2 py-0.5 rounded-full font-bold uppercase border shadow-sm ${
+                                  inc.status === 'DISPATCHED' || inc.status === 'ON_SCENE'
+                                    ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/40 shadow-emerald-900/30'
+                                    : 'bg-rose-950/90 text-rose-300 border-rose-500/40 shadow-rose-900/30'
+                                }`}>
+                                  {inc.status}
+                                </span>
+                                {inc.estimatedCasualties > 0 && (
+                                  <span className="text-[9px] font-mono text-rose-400 font-semibold">
+                                    ~{inc.estimatedCasualties} Casualties
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         );
                       })}
                     </div>
                   </div>
 
+                  {/* Incident Tactical Detail Card */}
                   {selectedIncident ? (
-                    <div className="space-y-3 pt-2 border-t border-zinc-800">
-                      <div className="p-3.5 rounded-xl bg-zinc-900 border border-zinc-800 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-rose-400">{selectedIncident.id}</span>
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800 uppercase font-bold">
-                            {selectedIncident.severity}
+                    <div className="space-y-3 pt-2 border-t border-zinc-800/80">
+                      
+                      {/* Holographic Tactical Detail Container */}
+                      <div className="p-4 rounded-2xl bg-zinc-950/90 border border-zinc-800 shadow-2xl relative overflow-hidden space-y-3">
+                        <div className="absolute top-0 right-0 w-28 h-28 bg-rose-500/5 rounded-full blur-xl pointer-events-none" />
+                        
+                        {/* Header ID & Urgency */}
+                        <div className="flex items-center justify-between border-b border-zinc-800/60 pb-2.5">
+                          <div className="flex items-center gap-2">
+                            <Crosshair className="w-4 h-4 text-cyan-400 animate-spin" />
+                            <span className="text-sm font-black font-mono text-white tracking-wide">
+                              {selectedIncident.id}
+                            </span>
+                          </div>
+                          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-rose-950/90 text-rose-300 border border-rose-600/50 uppercase font-black tracking-wider shadow-sm">
+                            {selectedIncident.severity} PRIORITY
                           </span>
                         </div>
-                        <h3 className="text-sm font-bold text-white">{selectedIncident.title}</h3>
-                        <p className="text-xs text-zinc-300">{selectedIncident.description}</p>
-                        <div className="text-[10px] text-cyan-300 font-mono">
-                          📍 {selectedIncident.location.address}
-                        </div>
-                        <div className="text-[10px] text-zinc-400 font-mono">
-                          Reported: {new Date(selectedIncident.reportedAt).toLocaleTimeString()} • Casualties: {selectedIncident.estimatedCasualties}
-                        </div>
-                      </div>
 
-                      {/* Recommend Nearest Vehicle */}
-                      <div className="space-y-2">
-                        <span className="text-[10px] uppercase font-bold text-zinc-400">
-                          Recommended Tactical Units:
-                        </span>
-                        {units.slice(0, 3).map(u => (
-                          <div
-                            key={u.id}
-                            className="p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 hover:border-cyan-500/50 flex items-center justify-between gap-2"
-                          >
-                            <div>
-                              <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                                <span>{u.callsign}</span>
-                                <span className="text-[9px] px-1 py-0.2 rounded bg-zinc-800 text-cyan-300">{u.type}</span>
-                              </div>
-                              <div className="text-[10px] text-zinc-400 mt-0.5 font-mono">
-                                Status: <strong className="text-emerald-400">{u.status}</strong> • ETA: {u.etaMinutes || 3}m
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => {
-                                dispatchUnit(u.id, selectedIncident.id);
-                                setTickerLogs(prev => [
-                                  {
-                                    id: Date.now().toString(),
-                                    type: 'info',
-                                    message: `DISPATCHED: ${u.callsign} assigned to ${selectedIncident.id}`,
-                                    timestamp: new Date().toLocaleTimeString('en-US', { hour12: false })
-                                  },
-                                  ...prev
-                                ]);
-                              }}
-                              className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-bold uppercase transition cursor-pointer"
-                            >
-                              Dispatch
-                            </button>
+                        {/* Title & Description */}
+                        <div>
+                          <h3 className="text-sm font-black text-white leading-snug">
+                            {selectedIncident.title}
+                          </h3>
+                          <p className="text-xs text-zinc-300 font-sans mt-1.5 leading-relaxed">
+                            {selectedIncident.description}
+                          </p>
+                        </div>
+
+                        {/* Address HUD */}
+                        <div className="p-2.5 rounded-xl bg-black/60 border border-zinc-800/90 space-y-1 font-mono text-[11px]">
+                          <div className="flex items-center gap-1.5 text-cyan-300 font-bold truncate">
+                            <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                            <span>{selectedIncident.location.address}</span>
                           </div>
-                        ))}
+                          <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-0.5">
+                            <span>GPS: {selectedIncident.location.lat.toFixed(5)}° N, {selectedIncident.location.lng.toFixed(5)}° E</span>
+                            <span className="text-emerald-400">Casualties: {selectedIncident.estimatedCasualties}</span>
+                          </div>
+                        </div>
+
+                        {/* Telemetry Metrics Bar */}
+                        <div className="grid grid-cols-3 gap-2 pt-1 font-mono text-center text-[10px]">
+                          <div className="p-2 rounded-xl bg-zinc-900/60 border border-zinc-800">
+                            <span className="text-zinc-400 block text-[9px]">TIME LOGGED</span>
+                            <strong className="text-white">{new Date(selectedIncident.reportedAt).toLocaleTimeString()}</strong>
+                          </div>
+                          <div className="p-2 rounded-xl bg-zinc-900/60 border border-zinc-800">
+                            <span className="text-zinc-400 block text-[9px]">CATEGORY</span>
+                            <strong className="text-cyan-300">{selectedIncident.type}</strong>
+                          </div>
+                          <div className="p-2 rounded-xl bg-zinc-900/60 border border-zinc-800">
+                            <span className="text-zinc-400 block text-[9px]">STATUS</span>
+                            <strong className="text-emerald-400">{selectedIncident.status}</strong>
+                          </div>
+                        </div>
                       </div>
 
+                      {/* Recommended Tactical Units Selector */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-[10px] uppercase font-bold text-zinc-400 px-1">
+                          <span className="flex items-center gap-1.5">
+                            <Siren className="w-3.5 h-3.5 text-cyan-400" />
+                            <span>Recommended Tactical Units</span>
+                          </span>
+                          <span className="text-zinc-500 font-mono text-[9px]">Ranked by Proximity</span>
+                        </div>
+
+                        <div className="space-y-2">
+                          {units.slice(0, 3).map(u => (
+                            <div
+                              key={u.id}
+                              className="p-3 rounded-2xl bg-zinc-950/80 border border-zinc-800/80 hover:border-cyan-500/50 hover:bg-zinc-900/50 transition-all flex items-center justify-between gap-3 shadow-md group"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0 group-hover:scale-105 transition-transform">
+                                  <Truck className="w-4 h-4" />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="text-xs font-bold text-white flex items-center gap-1.5 truncate">
+                                    <span className="truncate">{u.callsign}</span>
+                                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-950 border border-cyan-800 text-cyan-300 font-mono shrink-0">
+                                      {u.type}
+                                    </span>
+                                  </div>
+                                  <div className="text-[10px] text-zinc-400 font-mono flex items-center gap-2 mt-0.5">
+                                    <span>Status: <strong className="text-emerald-400">{u.status}</strong></span>
+                                    <span>&bull;</span>
+                                    <span className="text-cyan-300 font-bold">ETA: {u.etaMinutes || 3}m</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={() => {
+                                  dispatchUnit(u.id, selectedIncident.id);
+                                  setTickerLogs(prev => [
+                                    {
+                                      id: Date.now().toString(),
+                                      type: 'info',
+                                      message: `DISPATCHED: ${u.callsign} assigned to ${selectedIncident.id}`,
+                                      timestamp: new Date().toLocaleTimeString('en-US', { hour12: false })
+                                    },
+                                    ...prev
+                                  ]);
+                                }}
+                                className="px-3.5 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 active:scale-95 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-cyan-950/50 border border-cyan-400/40 cursor-pointer shrink-0 flex items-center gap-1"
+                              >
+                                <Navigation className="w-3.5 h-3.5" />
+                                <span>Dispatch</span>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Primary Action Button: Mark Incident Resolved */}
                       <button
                         onClick={() => resolveIncident(selectedIncident.id)}
-                        className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold uppercase transition cursor-pointer"
+                        className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-98 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-xl shadow-emerald-950/60 border border-emerald-400/40 cursor-pointer flex items-center justify-center gap-2"
                       >
-                        Mark Incident Resolved
+                        <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                        <span>Mark Incident Resolved</span>
                       </button>
                     </div>
                   ) : (
-                    <div className="p-6 text-center text-zinc-400 space-y-2 border border-dashed border-zinc-800 rounded-xl">
-                      <Truck className="w-8 h-8 text-zinc-600 mx-auto" />
-                      <p className="text-xs">Click any reported incident from the list above or on the map to dispatch units.</p>
+                    <div className="p-8 text-center text-zinc-400 space-y-2.5 border border-dashed border-zinc-800 rounded-2xl bg-zinc-950/40">
+                      <Truck className="w-10 h-10 text-zinc-600 mx-auto" />
+                      <div className="text-xs font-mono font-bold text-zinc-300">NO INCIDENT SELECTED</div>
+                      <p className="text-[11px] text-zinc-500 max-w-[240px] mx-auto leading-normal">
+                        Click any reported incident from the queue above or on the tactical map to dispatch emergency units.
+                      </p>
                     </div>
                   )}
                 </div>
