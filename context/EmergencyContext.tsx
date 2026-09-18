@@ -31,6 +31,8 @@ import {
 } from '@/data/demoData';
 import { sounds } from '@/lib/soundEffects';
 import { generateIncidentId } from '@/lib/utils';
+import { reverseGeocodeCoords, HYDERABAD_FALLBACK_COORDS, getCachedLocation } from '@/lib/geocoding';
+import { supabase } from '@/lib/supabaseClient';
 
 export type AppView = 
   | 'LANDING'
@@ -151,43 +153,22 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Real-Time Live User GPS Location State
   const [userLiveLocation, setUserLiveLocation] = useState<LiveUserLocation | null>(null);
 
-  // Reverse Geocoding helper using OpenStreetMap Nominatim or fallback
-  const reverseGeocodeCoords = async (lat: number, lng: number): Promise<{ address: string; zone: string }> => {
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
-        headers: { 'Accept-Language': 'en' },
-        signal: AbortSignal.timeout(3500)
-      });
-      if (res.ok) {
-        const json = await res.json();
-        const road = json.address?.road || json.address?.pedestrian || json.address?.suburb || json.address?.neighbourhood || '';
-        const city = json.address?.city || json.address?.town || json.address?.state_district || json.address?.state || '';
-        const suburb = json.address?.suburb || json.address?.neighbourhood || json.address?.city_district || 'Regional Sector';
-        const formatted = [road, city].filter(Boolean).join(', ') || json.display_name?.split(',').slice(0, 3).join(',') || `Real GPS Fix: ${lat.toFixed(5)}° N, ${lng.toFixed(5)}° E`;
-        return {
-          address: formatted,
-          zone: suburb
-        };
-      }
-    } catch {
-      // Ignore network errors and use coordinate string
-    }
-    return {
-      address: `Live GPS Fix: ${lat.toFixed(5)}° N, ${lng.toFixed(5)}° E`,
-      zone: 'Live Citizen Sector'
-    };
-  };
-
   // High-precision live location acquisition
   const refreshUserLocation = useCallback((): Promise<LiveUserLocation | null> => {
     return new Promise((resolve) => {
+      const cached = getCachedLocation();
+      const defaultLat = cached?.lat || HYDERABAD_FALLBACK_COORDS.lat;
+      const defaultLng = cached?.lng || HYDERABAD_FALLBACK_COORDS.lng;
+      const defaultAddr = cached?.address || HYDERABAD_FALLBACK_COORDS.address;
+      const defaultZone = cached?.zone || HYDERABAD_FALLBACK_COORDS.zone;
+
       if (typeof window === 'undefined' || !('geolocation' in navigator)) {
         const fallbackLoc: LiveUserLocation = {
-          lat: 17.4430,
-          lng: 78.3850,
-          accuracy: 8,
-          address: 'HITEC City, Hyderabad EOC Grid 4',
-          zone: 'Madhapur',
+          lat: defaultLat,
+          lng: defaultLng,
+          accuracy: 10,
+          address: defaultAddr,
+          zone: defaultZone,
           status: 'UNSUPPORTED',
           updatedAt: new Date().toLocaleTimeString()
         };
@@ -197,8 +178,8 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
 
       setUserLiveLocation(prev => prev ? { ...prev, status: 'ACQUIRING' } : {
-        lat: 17.4430,
-        lng: 78.3850,
+        lat: defaultLat,
+        lng: defaultLng,
         accuracy: 10,
         address: 'Acquiring high-precision GPS satellite fix...',
         zone: 'Detecting Location...',
@@ -225,11 +206,11 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         (err) => {
           console.warn('Live geolocation failed or denied, using sector baseline:', err.message);
           const fallbackLoc: LiveUserLocation = {
-            lat: 17.4430,
-            lng: 78.3850,
+            lat: defaultLat,
+            lng: defaultLng,
             accuracy: 12,
-            address: 'HITEC City, Hyderabad Regional Crisis Grid',
-            zone: 'Madhapur',
+            address: defaultAddr,
+            zone: defaultZone,
             status: err.code === 1 ? 'DENIED' : 'UNSUPPORTED',
             updatedAt: new Date().toLocaleTimeString()
           };
@@ -495,6 +476,38 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setSelectedIncident(newIncident);
     setMyActiveIncidentId(newId);
     sounds.playSosSent();
+
+    // Bi-Directional Database Sync with Supabase Realtime
+    try {
+      if (supabase) {
+        supabase
+          .from('incidents')
+          .insert([
+            {
+              id: newId,
+              title: newIncident.title,
+              description: newIncident.description,
+              type: newIncident.type,
+              severity: newIncident.severity,
+              status: newIncident.status,
+              latitude: resolvedLocation.lat,
+              longitude: resolvedLocation.lng,
+              address: resolvedLocation.address,
+              trapped_count: newIncident.trappedCount,
+              photo_url: newIncident.photoUrl,
+              reported_at: newIncident.reportedAt
+            }
+          ])
+          .then(
+            ({ error }) => {
+              if (error) console.info('Supabase sync info:', error.message);
+            },
+            (err: unknown) => console.info('Supabase sync catch:', err)
+          );
+      }
+    } catch (e) {
+      console.warn('Supabase sync notice (in-memory active):', e);
+    }
 
     // Trigger automated nearest ambulance dispatch flow immediately
     setTimeout(() => {

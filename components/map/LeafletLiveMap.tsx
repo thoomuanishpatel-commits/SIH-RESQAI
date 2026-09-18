@@ -10,7 +10,8 @@ import {
   Circle,
   Polyline,
   Polygon,
-  useMap
+  useMap,
+  useMapEvents
 } from 'react-leaflet';
 import L from 'leaflet';
 import {
@@ -45,6 +46,41 @@ const MapFlyTo: React.FC<{ coords: [number, number] | null }> = ({ coords }) => 
     }
   }, [coords, map]);
   return null;
+};
+
+// Map click listener handler for interactive coordinate pinning
+const MapClickHandler: React.FC<{ onMapClick?: (lat: number, lng: number) => void }> = ({ onMapClick }) => {
+  useMapEvents({
+    click(e) {
+      if (onMapClick) {
+        onMapClick(e.latlng.lat, e.latlng.lng);
+      }
+    }
+  });
+  return null;
+};
+
+// Custom manual coordinate pin icon for citizen disaster report
+const createManualPinIcon = () => {
+  return L.divIcon({
+    className: 'custom-manual-pin-marker',
+    html: `
+      <div class="relative flex items-center justify-center cursor-pointer">
+        <div class="absolute -inset-3 rounded-full bg-rose-500 opacity-70 animate-ping"></div>
+        <div class="w-9 h-9 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-2xl border-2 border-white ring-4 ring-rose-500/60 transform scale-110">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white font-bold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+          </svg>
+        </div>
+        <div class="absolute -bottom-3 bg-rose-950 text-[9px] font-mono font-bold text-rose-300 px-1.5 py-0.2 rounded border border-rose-500 shadow whitespace-nowrap">
+          PINNED LOCATION
+        </div>
+      </div>
+    `,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -20]
+  });
 };
 
 // Create custom HTML divIcons for Leaflet
@@ -266,7 +302,17 @@ const createUserLiveLocationIcon = () => {
 
 type TileSource = 'DARK' | 'SATELLITE' | 'STREET';
 
-export const LeafletLiveMap: React.FC = () => {
+export interface LeafletLiveMapProps {
+  isPublicEvacuationMap?: boolean;
+  onMapClick?: (lat: number, lng: number) => void;
+  pinnedLocation?: { lat: number; lng: number } | null;
+}
+
+export const LeafletLiveMap: React.FC<LeafletLiveMapProps> = ({
+  isPublicEvacuationMap = false,
+  onMapClick,
+  pinnedLocation
+}) => {
   const {
     incidents,
     units,
@@ -395,6 +441,14 @@ export const LeafletLiveMap: React.FC = () => {
             OSM / Esri
           </span>
         </div>
+
+        {isPublicEvacuationMap && (
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950/90 border border-emerald-500/40 text-[11px] font-mono font-bold text-emerald-300 shadow-xl backdrop-blur-md">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>OPSEC: TACTICAL FLEET MASKED</span>
+          </div>
+        )}
+
 
         {/* Layer toggle popover */}
         <div className="relative">
@@ -564,6 +618,27 @@ export const LeafletLiveMap: React.FC = () => {
         className="w-full h-full z-0"
       >
         <MapFlyTo coords={flyCoords} />
+        <MapClickHandler onMapClick={onMapClick} />
+
+        {/* MANUAL SOS PINNED LOCATION */}
+        {pinnedLocation && (
+          <Marker
+            position={[pinnedLocation.lat, pinnedLocation.lng]}
+            icon={createManualPinIcon()}
+          >
+            <Popup>
+              <div className="p-2 font-mono text-xs space-y-1 bg-slate-950 text-white border border-rose-500 rounded-lg">
+                <div className="font-bold text-rose-400">PINNED DISASTER POINT</div>
+                <div className="text-slate-300">
+                  {pinnedLocation.lat.toFixed(5)}° N, {pinnedLocation.lng.toFixed(5)}° E
+                </div>
+                <div className="text-[10px] text-amber-300">
+                  Targeted for SOS broadcast dispatch
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        )}
 
         <TileLayer
           key={`${tileType}-${tileUrls[tileType].url}`}
@@ -596,8 +671,8 @@ export const LeafletLiveMap: React.FC = () => {
           </Circle>
         ))}
 
-        {/* DYNAMIC RESPONDER ROUTE LINE */}
-        {routePoints.length > 0 && (
+        {/* DYNAMIC RESPONDER ROUTE LINE (Hidden in Public Evacuation Map for OPSEC) */}
+        {!isPublicEvacuationMap && routePoints.length > 0 && (
           <Polyline
             positions={routePoints}
             pathOptions={{
@@ -812,8 +887,8 @@ export const LeafletLiveMap: React.FC = () => {
           );
         })}
 
-        {/* 4. POINTING RESPONDER UNITS */}
-        {showUnits && filteredUnits.map(unit => {
+        {/* 4. POINTING RESPONDER UNITS (Hidden in Public Evacuation Map for OPSEC) */}
+        {!isPublicEvacuationMap && showUnits && filteredUnits.map(unit => {
           const isAmbulance = unit.vehicleCategory?.startsWith('AMBULANCE') || unit.type === 'EMS';
           const isFire = unit.vehicleCategory?.startsWith('FIRE') || unit.type === 'FIRE';
           const isPolice = unit.vehicleCategory?.startsWith('POLICE') || unit.type === 'POLICE';

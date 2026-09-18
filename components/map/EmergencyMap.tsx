@@ -25,10 +25,14 @@ const LeafletLiveMap = dynamic(
   }
 );
 
-export const EmergencyMap: React.FC = () => {
+import type { LeafletLiveMapProps } from './LeafletLiveMap';
+
+export type EmergencyMapProps = LeafletLiveMapProps;
+
+export const EmergencyMap: React.FC<EmergencyMapProps> = (props) => {
   return (
     <div className="w-full h-full min-h-[520px]">
-      <LeafletLiveMap />
+      <LeafletLiveMap {...props} />
     </div>
   );
 };

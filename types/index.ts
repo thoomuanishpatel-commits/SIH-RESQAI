@@ -114,6 +114,7 @@ export interface EmergencyUnit {
   etaMinutes?: number;
   distanceKm?: number;
   crewCount: number;
+  crewMembers?: string[];
   equipment: string[];
   isICUCapable?: boolean;
   heading?: number;
