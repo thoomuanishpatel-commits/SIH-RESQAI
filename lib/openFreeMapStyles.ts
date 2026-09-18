@@ -78,7 +78,7 @@ export const OPENFREEMAP_STYLES: MapStyleOption[] = [
   }
 ];
 
-export const DEFAULT_MAP_STYLE = 'https://tiles.openfreemap.org/styles/dark';
+export const DEFAULT_MAP_STYLE = 'instant-dark';
 
 export const OSM_ATTRIBUTION = '© <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>';
 

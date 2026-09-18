@@ -46,7 +46,7 @@ export const LiveResponseMap: React.FC<LiveResponseMapProps> = ({
 
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
-  const [is3DMode, setIs3DMode] = useState(true);
+  const [is3DMode, setIs3DMode] = useState(false);
   const [currentStyle, setCurrentStyle] = useState<string>(DEFAULT_MAP_STYLE);
 
   // Switch MapLibre style dynamically
@@ -89,8 +89,8 @@ export const LiveResponseMap: React.FC<LiveResponseMapProps> = ({
           style: initialStyle,
           center: selectedCity.center,
           zoom: selectedCity.zoom,
-          pitch: 45,
-          bearing: -12,
+          pitch: 0,
+          bearing: 0,
           attributionControl: false,
           maxPitch: 75
         });
