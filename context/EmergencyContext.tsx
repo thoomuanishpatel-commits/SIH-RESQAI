@@ -480,30 +480,32 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Bi-Directional Database Sync with Supabase Realtime
     try {
       if (supabase) {
-        supabase
-          .from('incidents')
-          .insert([
-            {
-              id: newId,
-              title: newIncident.title,
-              description: newIncident.description,
-              type: newIncident.type,
-              severity: newIncident.severity,
-              status: newIncident.status,
-              latitude: resolvedLocation.lat,
-              longitude: resolvedLocation.lng,
-              address: resolvedLocation.address,
-              trapped_count: newIncident.trappedCount,
-              photo_url: newIncident.photoUrl,
-              reported_at: newIncident.reportedAt
-            }
-          ])
-          .then(
-            ({ error }) => {
-              if (error) console.info('Supabase sync info:', error.message);
-            },
-            (err: unknown) => console.info('Supabase sync catch:', err)
-          );
+        Promise.resolve(
+          supabase
+            .from('incidents')
+            .insert([
+              {
+                id: newId,
+                title: newIncident.title,
+                description: newIncident.description,
+                type: newIncident.type,
+                severity: newIncident.severity,
+                status: newIncident.status,
+                latitude: resolvedLocation.lat,
+                longitude: resolvedLocation.lng,
+                address: resolvedLocation.address,
+                trapped_count: newIncident.trappedCount,
+                photo_url: newIncident.photoUrl,
+                reported_at: newIncident.reportedAt
+              }
+            ])
+        )
+          .then((res: any) => {
+            if (res?.error) console.info('Supabase sync info:', res.error.message);
+          })
+          .catch((err: any) => {
+            console.info('Supabase sync catch:', err);
+          });
       }
     } catch (e) {
       console.warn('Supabase sync notice (in-memory active):', e);
