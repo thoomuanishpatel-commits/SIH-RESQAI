@@ -2233,3 +2233,195 @@ export const TRANSLATIONS: Record<Language, {
     close: 'మూసివేయండి'
   }
 };
+
+// Data-driven instant safety guide for citizen disaster reporting
+export interface QuickDisasterSafetyGuide {
+  category: string;
+  emoji: string;
+  title: string;
+  subtitle: string;
+  emergencyHotline: string;
+  hotlineButtonText: string;
+  dos: string[];
+  donts: string[];
+}
+
+export const QUICK_DISASTER_SAFETY_GUIDES: Record<string, QuickDisasterSafetyGuide> = {
+  FIRE: {
+    category: 'FIRE',
+    emoji: '🔥',
+    title: 'FIRE EMERGENCY',
+    subtitle: 'Immediate structural & wildfire life-safety protocols',
+    emergencyHotline: '101',
+    hotlineButtonText: 'CALL FIRE CONTROL (101)',
+    dos: [
+      'Stay calm and evacuate immediately away from the fire origin.',
+      'Raise the alarm and shout to alert people nearby.',
+      'Call 101 or 112 with exact building floor & landmark.',
+      'Use staircases only; never use elevators during a fire.',
+      'Stay low to the ground beneath rising toxic smoke and fumes.',
+      'Close doors behind you as you evacuate to slow flame advancement.'
+    ],
+    donts: [
+      'Do NOT use elevators under any circumstances.',
+      'Do NOT re-enter a burning structure for personal belongings.',
+      'Do NOT open doors that feel hot to the touch (flashover danger).',
+      'Do NOT attempt dangerous rescues without protective breathing gear.'
+    ]
+  },
+  ROAD_ACCIDENT: {
+    category: 'ROAD_ACCIDENT',
+    emoji: '🚗',
+    title: 'ROAD TRAFFIC ACCIDENT',
+    subtitle: 'Trauma triage, crash hazard isolation & spine protection',
+    emergencyHotline: '108',
+    hotlineButtonText: 'CALL AMBULANCE (108)',
+    dos: [
+      'Park in a safe spot, turn on vehicle hazard warning lights, and deploy warning triangles.',
+      'Call 108 immediately for Advanced Life Support (ALS) trauma dispatch.',
+      'Turn off ignitions of crashed vehicles to mitigate fuel explosion risks.',
+      'Check victims for breathing and severe bleeding.',
+      'Apply direct firm pressure on open wounds with clean cloth or sterile gauze.',
+      'Keep conscious victims calm, still, and sheltered from oncoming traffic.'
+    ],
+    donts: [
+      'Do NOT move injured victims unless there is immediate risk of fire or explosion.',
+      'Do NOT remove a motorcycle rider’s helmet unless they cannot breathe.',
+      'Do NOT give water, food, or medication to unconscious or drowsy patients.',
+      'Do NOT stand in the middle of active highway lanes to take photos or film.'
+    ]
+  },
+  FLOOD: {
+    category: 'FLOOD',
+    emoji: '🌊',
+    title: 'FLOOD & URBAN INUNDATION',
+    subtitle: 'Flash flood survival, high ground retreat & electrical safety',
+    emergencyHotline: '1077',
+    hotlineButtonText: 'CALL DISASTER HELPLINE (1077)',
+    dos: [
+      'Move immediately to designated high ground or upper floors of RCC buildings.',
+      'Turn off main electrical breaker and gas supplies before water reaches home.',
+      'Monitor official TSDMA/IMD sirens, radio, and mobile crisis alerts.',
+      'Keep your 72-hour waterproof emergency kit, power banks, and documents with you.',
+      'Boil all tap water or use chlorine purification tablets before consumption.',
+      'Use high-visibility whistles or flashlight signals to alert rescue boats.'
+    ],
+    donts: [
+      'Do NOT walk through moving water — 15 cm of rapid flow can sweep you off feet.',
+      'Do NOT drive into flooded underpasses or submerged bridges (Turn Around, Don’t Drown).',
+      'Do NOT touch fallen electrical poles, utility lines, or standing water near transformers.',
+      'Do NOT spread unverified flood dam gate rumors on social media.'
+    ]
+  },
+  BUILDING_COLLAPSE: {
+    category: 'BUILDING_COLLAPSE',
+    emoji: '🏢',
+    title: 'BUILDING STRUCTURAL COLLAPSE',
+    subtitle: 'Void space protection, entrapment survival & USAR signaling',
+    emergencyHotline: '112',
+    hotlineButtonText: 'CALL EMERGENCY (112)',
+    dos: [
+      'If escaping, protect your head and exit quickly via exterior fire stairs.',
+      'If trapped, seek shelter under a heavy structural table or beside a sturdy load-bearing pillar (Void Space).',
+      'Cover your nose and mouth with a damp cloth or clothing to filter concrete dust.',
+      'Tap rhythmically on pipes or solid walls with a stone or metal object (NDRF acoustic searchers listen for 3-tap intervals).',
+      'Conserve your mobile phone battery by dimming screen and disabling background apps.',
+      'Shout only when you hear rescue crews directly overhead to avoid inhaling silica dust.'
+    ],
+    donts: [
+      'Do NOT light matches, candles, or lighters due to ruptured gas line risks.',
+      'Do NOT move frantically; kicking debris can trigger secondary structural shifts.',
+      'Do NOT re-enter compromised partially collapsed buildings.',
+      'Do NOT crowd rescue operational zones with private vehicles.'
+    ]
+  },
+  LANDSLIDE: {
+    category: 'LANDSLIDE',
+    emoji: '⛰️',
+    title: 'LANDSLIDE & DEBRIS FLOW',
+    subtitle: 'Slope failure avoidance, audio warnings & valley clearance',
+    emergencyHotline: '1077',
+    hotlineButtonText: 'CALL DISASTER CONTROL (1077)',
+    dos: [
+      'Evacuate immediately if you hear cracking trees, rumbling sounds, or sudden mud runoff.',
+      'Move perpendicular away from the slope path towards stable ridge crests.',
+      'Alert neighbors downhill if evacuation time permits safely.',
+      'If caught indoors without exit, curl into a tight ball and protect your head.',
+      'Watch for secondary slope movements that frequently follow after initial slide.',
+      'Report blocked mountain passes and culvert dams immediately to authorities.'
+    ],
+    donts: [
+      'Do NOT cross active debris paths or saturated mud embankments.',
+      'Do NOT build or park temporary shelters directly below steep cut slopes.',
+      'Do NOT return to homes situated on compromised hill bases until geologists clear them.',
+      'Do NOT approach downed power lines sheared by falling boulders.'
+    ]
+  },
+  GAS_LEAK: {
+    category: 'GAS_LEAK',
+    emoji: '☣️',
+    title: 'GAS LEAK & CHEMICAL VAPOR',
+    subtitle: 'Vapor plume avoidance, ignition prevention & cross-wind evacuation',
+    emergencyHotline: '101',
+    hotlineButtonText: 'CALL HAZMAT TEAM (101)',
+    dos: [
+      'Evacuate immediately cross-wind (perpendicular to wind direction) to avoid following the plume.',
+      'Cover face with a damp folded cloth to reduce vapor particulate inhalation.',
+      'Extinguish all open flames, candles, and pilot lights immediately.',
+      'Call emergency services from a safe distance outside the contaminated zone.',
+      'Seek higher ground if toxic gas is heavier than air (e.g. LPG, Chlorine).',
+      'Flush eyes and skin with clean copious running water if exposed.'
+    ],
+    donts: [
+      'Do NOT turn electric switches ON or OFF — sparks can ignite vapor clouds.',
+      'Do NOT operate doorbells, cell phones, or start vehicle ignitions near the leak.',
+      'Do NOT run downwind in the direction the odor or plume is traveling.',
+      'Do NOT re-enter enclosed rooms until hazmat squads certify atmosphere clearance.'
+    ]
+  },
+  SEVERE_STORM: {
+    category: 'SEVERE_STORM',
+    emoji: '🌪️',
+    title: 'CYCLONE & SEVERE STORM',
+    subtitle: 'Gale-force wind shielding, projectile protection & surge refuge',
+    emergencyHotline: '112',
+    hotlineButtonText: 'CALL NATIONAL EMERGENCY (112)',
+    dos: [
+      'Stay indoors in the strongest central room, bathroom, or hallway away from windows.',
+      'Close and latch all storm shutters; tape large glass panes in criss-cross pattern.',
+      'Unplug non-essential appliances to prevent damage from lightning power surges.',
+      'Keep battery-powered radios tuned to national weather bulletins.',
+      'Store adequate fresh drinking water before municipal pressure fails.',
+      'Remain sheltered during the storm "Eye" — dangerous reverse winds follow shortly.'
+    ],
+    donts: [
+      'Do NOT venture outside while gale winds or flying roof sheeting are active.',
+      'Do NOT shelter under tall isolated trees or tin roof bus shelters.',
+      'Do NOT touch metal fences or grounded pipes during lightning strikes.',
+      'Do NOT leave loose outdoor furniture, tin sheets, or plant pots unsecured.'
+    ]
+  },
+  OTHER: {
+    category: 'OTHER',
+    emoji: '🚨',
+    title: 'CIVIL EMERGENCY',
+    subtitle: 'General life safety, emergency broadcast & first responder coordination',
+    emergencyHotline: '112',
+    hotlineButtonText: 'CALL UNIFIED EMERGENCY (112)',
+    dos: [
+      'Move to a safe perimeter location away from active hazard epicenters.',
+      'Dial 112 (All-India Emergency Response Support System - ERSS).',
+      'Provide concise, accurate landmarks and road intersections.',
+      'Keep phone line open for dispatcher verification calls.',
+      'Follow instructions broadcast by police, fire, or NDRF commanders on scene.',
+      'Assist children, elderly, and differently-abled individuals safely.'
+    ],
+    donts: [
+      'Do NOT panic or spread unverified rumors on social media.',
+      'Do NOT block emergency vehicle sirens or rescue transit lanes.',
+      'Do NOT handle suspected hazardous containers or unexploded equipment.',
+      'Do NOT make unnecessary false calls that distract emergency dispatchers.'
+    ]
+  }
+};
+

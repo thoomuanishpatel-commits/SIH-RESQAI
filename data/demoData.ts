@@ -7,8 +7,105 @@ import {
   RoadBlock,
   RiskZone,
   SimulationScenario,
-  BuildingLandmark
+  BuildingLandmark,
+  DisasterReport
 } from '../types';
+
+export const INITIAL_DISASTER_REPORTS: DisasterReport[] = [
+  {
+    id: 'RSQ-2026-001048',
+    category: 'FIRE',
+    title: 'Commercial Complex 4th Floor Fire',
+    description: 'Electrical transformer explosion triggered heavy fire on 4th floor. Thick black smoke venting into stairwells.',
+    severity: 'CRITICAL',
+    status: 'VERIFIED',
+    location: {
+      lat: 17.4483,
+      lng: 78.3915,
+      address: 'Near Cyber Towers, HITEC City Main Rd, Hyderabad',
+      zone: 'Madhapur',
+      accuracy: 5,
+      source: 'DEVICE_GPS'
+    },
+    reportedAt: '2026-09-18T14:10:00Z',
+    userId: 'CITIZEN_TEL_98480',
+    evidence: {
+      imagePath: 'incidents/RSQ-2026-001048/evidence.jpg',
+      previewUrl: 'https://images.unsplash.com/photo-1543083477-4f785aeafaa9?auto=format&fit=crop&w=800&q=80',
+      anonymizedPreviewUrl: 'https://images.unsplash.com/photo-1543083477-4f785aeafaa9?auto=format&fit=crop&w=800&q=80',
+      mediaType: 'image/jpeg',
+      uploadedAt: '2026-09-18T14:10:30Z'
+    },
+    faceMetadata: {
+      faceDetected: false,
+      faceCount: 0,
+      anonymized: false,
+      scannedAt: '2026-09-18T14:10:35Z'
+    },
+    aiAnalysis: {
+      detectedCategory: 'Possible Fire',
+      confidence: 94,
+      matchConfirmed: true,
+      explanation: 'Dense black smoke plumes and thermal flashover hazard detected in multi-story structure.',
+      statusRecommendation: 'Likely Genuine',
+      analyzedAt: '2026-09-18T14:10:40Z'
+    },
+    adminVerification: {
+      adminId: 'EOC_SUPV_HYD_02',
+      verifiedAt: '2026-09-18T14:12:00Z',
+      decision: 'VERIFIED',
+      notes: 'Confirmed via GHMC intersection optical cameras. Bronto Skylift dispatched.'
+    },
+    statusHistory: [
+      { status: 'SUBMITTED', timestamp: '2026-09-18T14:10:00Z', actor: 'CITIZEN' },
+      { status: 'UNDER_VERIFICATION', timestamp: '2026-09-18T14:10:35Z', actor: 'SYSTEM_TRIAGE' },
+      { status: 'VERIFIED', timestamp: '2026-09-18T14:12:00Z', actor: 'EOC_SUPV_HYD_02', notes: 'Confirmed via GHMC intersection camera.' }
+    ]
+  },
+  {
+    id: 'RSQ-2026-001049',
+    category: 'FLOOD',
+    title: 'Musi River Inundation & Stranded Vehicles',
+    description: 'Causeway bridge water levels rose by 1.4 meters in 30 minutes. Multiple commercial autos caught in current.',
+    severity: 'HIGH',
+    status: 'UNDER_VERIFICATION',
+    location: {
+      lat: 17.3753,
+      lng: 78.4744,
+      address: 'Moosarambagh Cause Bridge, Malakpet, Hyderabad',
+      zone: 'Zone 4 - Musi River Basin',
+      accuracy: 8,
+      source: 'DEVICE_GPS'
+    },
+    reportedAt: '2026-09-18T14:20:00Z',
+    userId: 'CITIZEN_TEL_77123',
+    evidence: {
+      imagePath: 'incidents/RSQ-2026-001049/evidence.jpg',
+      previewUrl: 'https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=800&q=80',
+      anonymizedPreviewUrl: 'https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=800&q=80',
+      mediaType: 'image/jpeg',
+      uploadedAt: '2026-09-18T14:20:30Z'
+    },
+    faceMetadata: {
+      faceDetected: true,
+      faceCount: 1,
+      anonymized: true,
+      scannedAt: '2026-09-18T14:20:35Z'
+    },
+    aiAnalysis: {
+      detectedCategory: 'Possible Inundation / Flooding',
+      confidence: 89,
+      matchConfirmed: true,
+      explanation: 'Turbulent flood water covering roadway and vehicular chassis. Immediate swift-water boat rescue recommended.',
+      statusRecommendation: 'Pending Human Review',
+      analyzedAt: '2026-09-18T14:20:40Z'
+    },
+    statusHistory: [
+      { status: 'SUBMITTED', timestamp: '2026-09-18T14:20:00Z', actor: 'CITIZEN' },
+      { status: 'UNDER_VERIFICATION', timestamp: '2026-09-18T14:20:35Z', actor: 'SYSTEM_TRIAGE' }
+    ]
+  }
+];
 
 export const INITIAL_INCIDENTS: Incident[] = [
   {

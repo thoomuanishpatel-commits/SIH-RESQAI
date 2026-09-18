@@ -39,6 +39,7 @@ import { useEmergency } from '@/context/EmergencyContext';
 import { Incident, IncidentCategory, IncidentSeverity, EmergencyUnit } from '@/types';
 import { analyzeEmergencyImageWithGemini, GeminiDisasterAnalysis } from '@/lib/geminiVision';
 import { reverseGeocodeCoords, HYDERABAD_FALLBACK_COORDS } from '@/lib/geocoding';
+import { CitizenReportWizard } from './CitizenReportWizard';
 
 function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth radius in km
@@ -66,6 +67,7 @@ export const CitizenIncidentTracker: React.FC<CitizenIncidentTrackerProps> = ({
   const {
     createIncident,
     incidents,
+    disasterReports,
     units,
     shelters,
     userLiveLocation,
@@ -286,7 +288,23 @@ export const CitizenIncidentTracker: React.FC<CitizenIncidentTrackerProps> = ({
     }
   };
 
-  // Filtered Incidents for Tab 2
+  // Filtered Incidents & Disaster Reports for Tab 2
+  const filteredDisasterReports = disasterReports.filter(rep => {
+    const matchesQuery = searchQuery.trim() === '' ||
+      rep.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      rep.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      rep.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      rep.location.address.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (statusFilter === 'ACTIVE') {
+      return matchesQuery && rep.status !== 'RESOLVED' && rep.status !== 'REJECTED' && rep.status !== 'FALSE_REPORT';
+    }
+    if (statusFilter === 'RESOLVED') {
+      return matchesQuery && (rep.status === 'RESOLVED' || rep.status === 'REJECTED' || rep.status === 'FALSE_REPORT');
+    }
+    return matchesQuery;
+  });
+
   const filteredIncidents = incidents.filter(inc => {
     // Search query matching
     const matchesQuery = searchQuery.trim() === '' ||
@@ -426,291 +444,18 @@ export const CitizenIncidentTracker: React.FC<CitizenIncidentTrackerProps> = ({
           </button>
         </div>
 
-        {/* TAB 1: RAISE SOS REPORT */}
+        {/* TAB 1: RAISE DISASTER / SOS REPORT (Modern 6-step Wizard with Legal Notice, Face Privacy & Safety Guides) */}
         {activeTab === 'SOS' && (
-          <div className="space-y-6 animate-in fade-in duration-200">
-            
-            {/* A. Emergency Type Selector */}
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold flex items-center gap-1.5">
-                  <span>1. Emergency Category</span>
-                  <span className="text-rose-400">*</span>
-                </label>
-                <span className="text-[10px] font-mono text-slate-500">Tap to select primary threat</span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-6">
-                {(['Rescue', 'Medical', 'Fire', 'Police', 'Food', 'Water'] as const).map(cat => {
-                  const Icon = categoryIcons[cat];
-                  const colors = categoryColors[cat];
-                  const isSelected = selectedCategory === cat;
-
-                  return (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setSelectedCategory(cat)}
-                      className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition group cursor-pointer ${
-                        isSelected
-                          ? `${colors.activeBg} shadow-lg ring-2 ring-white/20`
-                          : `${colors.bg} ${colors.border} text-slate-300 hover:text-white hover:border-white/30`
-                      }`}
-                    >
-                      <Icon className={`w-5 h-5 mb-1.5 transition-transform group-hover:scale-110 ${isSelected ? 'text-white' : colors.text}`} />
-                      <span className="text-xs font-mono font-bold tracking-wide">{cat}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* B. Live Location Detector & Map Pinning Override */}
-            <div className="p-4 rounded-2xl bg-black/40 border border-white/10 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-300">
-                  <MapPin className="w-4 h-4 text-cyan-400" />
-                  <span>2. LIVE LOCATION DETECTION</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleRecalibrateLocation}
-                  disabled={isLocating}
-                  className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-mono text-cyan-400 flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
-                >
-                  <RefreshCw className={`w-3 h-3 ${isLocating ? 'animate-spin' : ''}`} />
-                  <span>{isLocating ? 'Acquiring...' : 'Detect Again / Recalibrate'}</span>
-                </button>
-              </div>
-
-              {/* Map pin override indicator if citizen clicked on map */}
-              {pinnedLocation ? (
-                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-amber-300">
-                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                      <span>MAP PIN OVERRIDE ACTIVE</span>
-                    </div>
-                    <div className="text-xs font-mono text-white">
-                      {pinnedAddress || 'Resolving reverse geocode location...'}
-                    </div>
-                    <div className="text-[10px] font-mono text-amber-400">
-                      GPS: {pinnedLocation.lat.toFixed(5)}° N, {pinnedLocation.lng.toFixed(5)}° E (Manual Click)
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={onClearPinnedLocation}
-                    className="p-1 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition"
-                    title="Clear Pin & Return to Live GPS"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-1.5">
-                  <div className="text-xs text-white font-medium flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>{userLiveLocation?.address || 'Acquiring high-precision GPS satellite fix...'}</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono text-slate-400">
-                    <span>
-                      GPS: <strong className="text-cyan-300">{userLiveLocation?.lat.toFixed(5) || HYDERABAD_FALLBACK_COORDS.lat.toFixed(5)}° N</strong>, <strong className="text-cyan-300">{userLiveLocation?.lng.toFixed(5) || HYDERABAD_FALLBACK_COORDS.lng.toFixed(5)}° E</strong>
-                    </span>
-                    <span>•</span>
-                    <span>
-                      Accuracy: <strong className="text-emerald-400">±{userLiveLocation?.accuracy || 5}m</strong>
-                    </span>
-                    <span>•</span>
-                    <span className="text-slate-500">
-                      Tip: Tap anywhere on map to override pin
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* C. Photo Upload with Gemini 2.5 Flash AI Verification */}
-            <div className="p-4 rounded-2xl bg-black/40 border border-white/10 space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold flex items-center gap-1.5">
-                  <Camera className="w-4 h-4 text-emerald-400" />
-                  <span>3. Photo Upload & AI Vision Verification</span>
-                </label>
-                {imagePreview && (
-                  <button
-                    type="button"
-                    onClick={handleClearPhoto}
-                    className="text-[11px] font-mono text-rose-400 hover:text-rose-300 transition"
-                  >
-                    Remove Photo
-                  </button>
-                )}
-              </div>
-
-              {!imagePreview ? (
-                <div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoSelect}
-                    className="hidden"
-                    id="citizen-photo-upload"
-                  />
-                  <label
-                    htmlFor="citizen-photo-upload"
-                    className="w-full flex flex-col items-center justify-center p-6 border-2 border-dashed border-white/15 hover:border-cyan-500/50 rounded-2xl bg-white/[0.02] hover:bg-cyan-500/5 transition cursor-pointer group"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform mb-2">
-                      <Camera className="w-5 h-5" />
-                    </div>
-                    <span className="text-xs font-mono font-bold text-slate-200">
-                      Take Photo or Upload Distress Image
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-mono mt-0.5">
-                      Auto-verified by Google Gemini 2.5 Flash Vision
-                    </span>
-                  </label>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="relative rounded-xl overflow-hidden border border-white/15 max-h-48 bg-black flex items-center justify-center">
-                    <img
-                      src={imagePreview}
-                      alt="Distress upload"
-                      className="object-cover w-full h-48"
-                    />
-                    {isAnalyzingImage && (
-                      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm flex flex-col items-center justify-center gap-2 text-cyan-300 font-mono text-xs">
-                        <Sparkles className="w-6 h-6 text-cyan-400 animate-spin" />
-                        <span className="font-bold">Analyzing scene with Gemini 2.5 Flash Vision...</span>
-                        <span className="text-[10px] text-slate-400">Classifying threat severity & casualty markers</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Gemini AI Verification Badge */}
-                  {aiAnalysis && !isAnalyzingImage && (
-                    <div className={`p-3.5 rounded-xl border text-xs font-mono space-y-2.5 ${
-                      aiAnalysis.isFake
-                        ? 'bg-rose-950/40 border-rose-500/50 text-rose-200'
-                        : 'bg-emerald-950/40 border-emerald-500/50 text-emerald-200'
-                    }`}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {aiAnalysis.isFake ? (
-                            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
-                          ) : (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                          )}
-                          <span className="font-bold uppercase tracking-wider">
-                            {aiAnalysis.isFake
-                              ? '⚠️ AI Vision Warning: Non-Emergency Detected'
-                              : `✅ Gemini Vision Verified: ${aiAnalysis.type}`}
-                          </span>
-                        </div>
-                        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-white/10 text-white">
-                          GEMINI 2.5 FLASH
-                        </span>
-                      </div>
-
-                      {aiAnalysis.isFake ? (
-                        <p className="text-[11px] text-rose-300">
-                          {aiAnalysis.description || 'No active emergency detected in image. Please ensure photo captures the emergency condition.'}
-                        </p>
-                      ) : (
-                        <div className="space-y-2">
-                          <p className="text-slate-200 text-xs">{aiAnalysis.description}</p>
-                          
-                          {/* Severity Gauge */}
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-[11px]">
-                              <span className="text-slate-400">Threat Severity Meter:</span>
-                              <strong className="text-amber-400">{aiAnalysis.severity}%</strong>
-                            </div>
-                            <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-                              <div
-                                className="h-full bg-gradient-to-r from-amber-500 to-rose-500 transition-all duration-500"
-                                style={{ width: `${Math.min(100, Math.max(10, aiAnalysis.severity))}%` }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Casualties & Resources */}
-                          <div className="flex flex-wrap items-center gap-2 pt-1">
-                            <span className="px-2 py-0.5 rounded bg-black/50 border border-white/10 text-[10px] text-amber-300">
-                              Casualties: ~{aiAnalysis.casualtyEstimate}
-                            </span>
-                            {aiAnalysis.trappedCount > 0 && (
-                              <span className="px-2 py-0.5 rounded bg-rose-950 border border-rose-700 text-[10px] text-rose-300 font-bold">
-                                Trapped: {aiAnalysis.trappedCount}
-                              </span>
-                            )}
-                            {aiAnalysis.requiredResources?.map((res, i) => (
-                              <span key={i} className="px-2 py-0.5 rounded bg-blue-950 border border-blue-700 text-[10px] text-blue-300">
-                                🚒 {res}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {aiError && (
-                    <div className="p-2.5 rounded-xl bg-amber-950/40 border border-amber-500/40 text-xs font-mono text-amber-300">
-                      Notice: {aiError} (Manual report will still be processed immediately).
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* D. Distress Description & Trapped Count */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="sm:col-span-2 space-y-1.5">
-                <label className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">
-                  4. Distress Description / Details (Optional)
-                </label>
-                <textarea
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  placeholder="e.g. Flood water rising fast on ground floor, 2 seniors need immediate boat rescue..."
-                  rows={2}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 text-white placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-cyan-500/70 focus:ring-1 focus:ring-cyan-500 transition resize-none"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">
-                  Trapped Count
-                </label>
-                <div className="flex items-center h-[62px]">
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={trappedCount}
-                    onChange={e => setTrappedCount(parseInt(e.target.value) || 0)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 text-white text-sm font-mono font-bold focus:outline-none focus:border-cyan-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* E. Large Pulsing Action Button */}
-            <button
-              type="button"
-              onClick={handleBroadcastSOS}
-              disabled={isSubmitting}
-              className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-600 text-white font-mono font-black text-sm tracking-wider uppercase flex items-center justify-center gap-3 shadow-2xl shadow-rose-950/80 border-2 border-rose-400/60 transform active:scale-98 transition duration-150 cursor-pointer animate-pulse disabled:opacity-60"
-            >
-              <Radio className="w-5 h-5 text-white animate-spin" />
-              <span>🚨 BROADCAST EMERGENCY SOS NOW</span>
-            </button>
-          </div>
+          <CitizenReportWizard
+            pinnedLocation={pinnedLocation}
+            onClearPinnedLocation={onClearPinnedLocation}
+            onNavigateToTrack={(reportId) => {
+              setActiveTab('TRACK');
+              setSearchQuery(reportId);
+            }}
+          />
         )}
+
 
         {/* TAB 2: TRACK MY TICKET */}
         {activeTab === 'TRACK' && (
@@ -749,12 +494,12 @@ export const CitizenIncidentTracker: React.FC<CitizenIncidentTrackerProps> = ({
               </div>
             </div>
 
-            {/* Incidents List Cards */}
+            {/* Incidents & Disaster Reports List Cards */}
             <div className="space-y-3.5 max-h-[500px] overflow-y-auto pr-1">
-              {filteredIncidents.length === 0 ? (
+              {filteredDisasterReports.length === 0 && filteredIncidents.length === 0 ? (
                 <div className="p-8 rounded-2xl bg-black/30 border border-white/5 text-center text-slate-400 font-mono text-xs space-y-2">
                   <Info className="w-6 h-6 text-slate-500 mx-auto" />
-                  <div>No matching emergency distress tickets found.</div>
+                  <div>No matching emergency distress reports found.</div>
                   <button
                     onClick={() => { setSearchQuery(''); setStatusFilter('ALL'); }}
                     className="text-cyan-400 underline hover:text-cyan-300 text-[11px]"
@@ -763,122 +508,208 @@ export const CitizenIncidentTracker: React.FC<CitizenIncidentTrackerProps> = ({
                   </button>
                 </div>
               ) : (
-                filteredIncidents.map(inc => {
-                  const isSelected = selectedIncident?.id === inc.id;
-                  const resp = getAssignedResponder(inc);
-                  const stepIndex = getStatusStepIndex(inc.status);
+                <>
+                  {/* Verified Disaster Reports */}
+                  {filteredDisasterReports.map(rep => {
+                    const statusColors: Record<string, string> = {
+                      SUBMITTED: 'bg-blue-950/80 border-blue-600/50 text-blue-300',
+                      UNDER_VERIFICATION: 'bg-amber-950/80 border-amber-600/50 text-amber-300',
+                      VERIFIED: 'bg-emerald-950/80 border-emerald-600/50 text-emerald-300',
+                      DISPATCHED: 'bg-indigo-950/80 border-indigo-600/50 text-indigo-300',
+                      RESOLVED: 'bg-zinc-800/80 border-zinc-600/50 text-slate-300',
+                      REJECTED: 'bg-zinc-900/80 border-zinc-700 text-slate-500',
+                      FALSE_REPORT: 'bg-rose-950/80 border-rose-600/70 text-rose-300'
+                    };
 
-                  return (
-                    <div
-                      key={inc.id}
-                      onClick={() => setSelectedIncident(inc)}
-                      className={`p-4 rounded-2xl border transition cursor-pointer space-y-3 ${
-                        isSelected
-                          ? 'bg-cyan-950/30 border-cyan-500/60 shadow-xl ring-1 ring-cyan-500/40'
-                          : 'bg-black/40 border-white/10 hover:border-white/20 hover:bg-white/[0.02]'
-                      }`}
-                    >
-                      {/* Card Header: Type Badge & Severity Bar */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono font-bold text-cyan-300">
-                            {inc.id}
-                          </span>
-                          <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase ${
-                            inc.severity === 'CRITICAL'
-                              ? 'bg-rose-950 text-rose-300 border border-rose-800'
-                              : 'bg-amber-950 text-amber-300 border border-amber-800'
-                          }`}>
-                            {inc.type} • {inc.severity}
-                          </span>
-                        </div>
-
-                        {/* Share ticket button */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopyTicketLink(inc.id);
-                          }}
-                          className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-mono text-slate-300 flex items-center gap-1 transition"
-                          title="Copy direct shareable link"
-                        >
-                          {copiedIncidentId === inc.id ? (
-                            <>
-                              <Check className="w-3 h-3 text-emerald-400" />
-                              <span className="text-emerald-300">COPIED</span>
-                            </>
-                          ) : (
-                            <>
-                              <Share2 className="w-3 h-3 text-slate-400" />
-                              <span>SHARE</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Title & Location */}
-                      <div>
-                        <div className="text-sm font-bold text-white">{inc.title}</div>
-                        <div className="text-xs text-slate-400 font-mono mt-0.5 flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                          <span className="truncate">{inc.location.address}</span>
-                        </div>
-                      </div>
-
-                      {/* Live 4-Stage Responder Status Pipeline */}
-                      <div className="pt-2 border-t border-white/5 space-y-1.5">
-                        <div className="text-[10px] font-mono uppercase text-slate-400 font-bold">
-                          Responder Status Pipeline
-                        </div>
-                        <div className="grid grid-cols-4 gap-1 text-[10px] font-mono text-center">
-                          {(['REPORTED', 'DISPATCHED', 'AT SCENE', 'RESOLVED'] as const).map((stage, i) => {
-                            const isDone = i <= stepIndex;
-                            const isCurrent = i === stepIndex;
-
-                            return (
-                              <div
-                                key={stage}
-                                className={`py-1 px-1 rounded font-bold border transition ${
-                                  isCurrent
-                                    ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow'
-                                    : isDone
-                                    ? 'bg-emerald-950/40 border-emerald-600/40 text-emerald-400'
-                                    : 'bg-black/30 border-white/5 text-slate-600'
-                                }`}
-                              >
-                                {stage}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Assigned Responder Details (Ambulance / Fire / Police) */}
-                      {resp.unit && (
-                        <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between gap-3 text-xs font-mono">
+                    return (
+                      <div
+                        key={rep.id}
+                        className="p-4 rounded-2xl border border-white/10 bg-black/40 hover:border-white/20 transition space-y-3"
+                      >
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <Truck className="w-4 h-4 text-emerald-400 shrink-0" />
-                            <div>
-                              <div className="font-bold text-slate-200">
-                                {resp.unit.callsign} ({resp.unit.type})
-                              </div>
-                              <div className="text-[10px] text-slate-400">
-                                Crew: {resp.unit.crewMembers?.slice(0, 2).join(', ') || resp.unit.driverName || 'TSDMA Squad'}
-                              </div>
-                            </div>
+                            <span className="text-xs font-mono font-bold text-cyan-300">
+                              {rep.id}
+                            </span>
+                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase border ${
+                              statusColors[rep.status] || 'bg-slate-800 text-slate-300'
+                            }`}>
+                              {rep.status.replace('_', ' ')}
+                            </span>
+                            {rep.faceMetadata?.faceDetected ? (
+                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-blue-950/70 border border-blue-600/40 text-blue-300 flex items-center gap-1">
+                                <ShieldCheck className="w-3 h-3" />
+                                <span>Faces Protected</span>
+                              </span>
+                            ) : null}
                           </div>
-                          <div className="text-right">
-                            <div className="text-[10px] text-slate-400">DISTANCE & ETA</div>
-                            <div className="font-bold text-cyan-300">
-                              {resp.distanceKm} km • <strong className="text-emerald-400">{resp.etaMins}m ETA</strong>
-                            </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopyTicketLink(rep.id);
+                            }}
+                            className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-mono text-slate-300 flex items-center gap-1 transition"
+                            title="Copy report ID"
+                          >
+                            {copiedIncidentId === rep.id ? (
+                              <>
+                                <Check className="w-3 h-3 text-emerald-400" />
+                                <span className="text-emerald-300">COPIED</span>
+                              </>
+                            ) : (
+                              <>
+                                <Share2 className="w-3 h-3 text-slate-400" />
+                                <span>SHARE</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        <div>
+                          <div className="text-sm font-bold text-white flex items-center gap-2">
+                            <span>{rep.category.toUpperCase()} DISASTER REPORT</span>
+                            {rep.aiAnalysis && (
+                              <span className="text-[10px] font-mono text-emerald-400 font-normal">
+                                (AI Match: {rep.aiAnalysis.confidence}%)
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-300 font-mono mt-1 line-clamp-2">
+                            {rep.description}
+                          </p>
+                          <div className="text-xs text-slate-400 font-mono mt-1 flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                            <span className="truncate">{rep.location.address}</span>
                           </div>
                         </div>
-                      )}
-                    </div>
-                  );
-                })
+
+                        {rep.status === 'FALSE_REPORT' && rep.adminVerification?.penaltyNoticeAmount && (
+                          <div className="p-2 rounded-xl bg-rose-950/50 border border-rose-500/40 text-xs font-mono text-rose-300">
+                            ⚠️ Classified as Unsubstantiated Report. Statutory warning recorded (Demo Penalty: ₹{rep.adminVerification.penaltyNoticeAmount.toLocaleString('en-IN')}).
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {filteredIncidents.map(inc => {
+                    const isSelected = selectedIncident?.id === inc.id;
+                    const resp = getAssignedResponder(inc);
+                    const stepIndex = getStatusStepIndex(inc.status);
+
+                    return (
+                      <div
+                        key={inc.id}
+                        onClick={() => setSelectedIncident(inc)}
+                        className={`p-4 rounded-2xl border transition cursor-pointer space-y-3 ${
+                          isSelected
+                            ? 'bg-cyan-950/30 border-cyan-500/60 shadow-xl ring-1 ring-cyan-500/40'
+                            : 'bg-black/40 border-white/10 hover:border-white/20 hover:bg-white/[0.02]'
+                        }`}
+                      >
+                        {/* Card Header: Type Badge & Severity Bar */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono font-bold text-cyan-300">
+                              {inc.id}
+                            </span>
+                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase ${
+                              inc.severity === 'CRITICAL'
+                                ? 'bg-rose-950 text-rose-300 border border-rose-800'
+                                : 'bg-amber-950 text-amber-300 border border-amber-800'
+                            }`}>
+                              {inc.type} • {inc.severity}
+                            </span>
+                          </div>
+
+                          {/* Share ticket button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopyTicketLink(inc.id);
+                            }}
+                            className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-mono text-slate-300 flex items-center gap-1 transition"
+                            title="Copy direct shareable link"
+                          >
+                            {copiedIncidentId === inc.id ? (
+                              <>
+                                <Check className="w-3 h-3 text-emerald-400" />
+                                <span className="text-emerald-300">COPIED</span>
+                              </>
+                            ) : (
+                              <>
+                                <Share2 className="w-3 h-3 text-slate-400" />
+                                <span>SHARE</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Title & Location */}
+                        <div>
+                          <div className="text-sm font-bold text-white">{inc.title}</div>
+                          <div className="text-xs text-slate-400 font-mono mt-0.5 flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                            <span className="truncate">{inc.location.address}</span>
+                          </div>
+                        </div>
+
+                        {/* Live 4-Stage Responder Status Pipeline */}
+                        <div className="pt-2 border-t border-white/5 space-y-1.5">
+                          <div className="text-[10px] font-mono uppercase text-slate-400 font-bold">
+                            Responder Status Pipeline
+                          </div>
+                          <div className="grid grid-cols-4 gap-1 text-[10px] font-mono text-center">
+                            {(['REPORTED', 'DISPATCHED', 'AT SCENE', 'RESOLVED'] as const).map((stage, i) => {
+                              const isDone = i <= stepIndex;
+                              const isCurrent = i === stepIndex;
+
+                              return (
+                                <div
+                                  key={stage}
+                                  className={`py-1 px-1 rounded font-bold border transition ${
+                                    isCurrent
+                                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow'
+                                      : isDone
+                                      ? 'bg-emerald-950/40 border-emerald-600/40 text-emerald-400'
+                                      : 'bg-black/30 border-white/5 text-slate-600'
+                                  }`}
+                                >
+                                  {stage}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Assigned Responder Details (Ambulance / Fire / Police) */}
+                        {resp.unit && (
+                          <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between gap-3 text-xs font-mono">
+                            <div className="flex items-center gap-2">
+                              <Truck className="w-4 h-4 text-emerald-400 shrink-0" />
+                              <div>
+                                <div className="font-bold text-slate-200">
+                                  {resp.unit.callsign} ({resp.unit.type})
+                                </div>
+                                <div className="text-[10px] text-slate-400">
+                                  Crew: {resp.unit.crewMembers?.slice(0, 2).join(', ') || resp.unit.driverName || 'TSDMA Squad'}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-[10px] text-slate-400">DISTANCE & ETA</div>
+                              <div className="font-bold text-cyan-300">
+                                {resp.distanceKm} km • <strong className="text-emerald-400">{resp.etaMins}m ETA</strong>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </>
               )}
             </div>
           </div>

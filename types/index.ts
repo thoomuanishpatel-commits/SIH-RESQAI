@@ -220,3 +220,90 @@ export interface BuildingLandmark {
   structuralStatus: 'SAFE' | 'AT_RISK' | 'EVACUATING' | 'MONITORING';
   safetyFeatures: string[];
 }
+
+// Formal Disaster Reporting & Verification Types
+export type DisasterCategory =
+  | 'FIRE'
+  | 'ROAD_ACCIDENT'
+  | 'FLOOD'
+  | 'BUILDING_COLLAPSE'
+  | 'LANDSLIDE'
+  | 'GAS_LEAK'
+  | 'SEVERE_STORM'
+  | 'OTHER';
+
+export type DisasterStatus =
+  | 'SUBMITTED'
+  | 'UNDER_VERIFICATION'
+  | 'VERIFIED'
+  | 'DISPATCHED'
+  | 'RESOLVED'
+  | 'REJECTED'
+  | 'FALSE_REPORT';
+
+export interface FaceBoundingBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface FaceDetectionMetadata {
+  faceDetected: boolean;
+  faceCount: number;
+  anonymized: boolean;
+  boundingBoxes?: FaceBoundingBox[];
+  scannedAt: string;
+}
+
+export interface AIDisasterVerification {
+  detectedCategory: string;
+  confidence: number;
+  matchConfirmed: boolean;
+  explanation: string;
+  statusRecommendation: 'Pending Human Review' | 'Likely Genuine' | 'Requires Clarification';
+  analyzedAt: string;
+}
+
+export interface AdminVerificationRecord {
+  adminId: string;
+  verifiedAt: string;
+  decision: DisasterStatus;
+  reason?: string;
+  notes?: string;
+  penaltyNoticeDisplayed?: boolean;
+  penaltyNoticeAmount?: number;
+}
+
+export interface DisasterReport {
+  id: string; // RSQ-2026-XXXXXX
+  category: DisasterCategory;
+  title: string;
+  description: string;
+  severity: IncidentSeverity;
+  status: DisasterStatus;
+  location: LocationCoords & {
+    accuracy?: number;
+    source: 'DEVICE_GPS' | 'MANUAL_PIN' | 'CIVIC_SEARCH' | 'FALLBACK';
+  };
+  reportedAt: string;
+  userId: string;
+  evidence?: {
+    imagePath?: string;
+    signedUrl?: string;
+    previewUrl?: string;
+    anonymizedPreviewUrl?: string;
+    mediaType: string;
+    uploadedAt: string;
+  };
+  faceMetadata?: FaceDetectionMetadata;
+  aiAnalysis?: AIDisasterVerification;
+  adminVerification?: AdminVerificationRecord;
+  statusHistory: Array<{
+    status: DisasterStatus;
+    timestamp: string;
+    actor: string;
+    notes?: string;
+  }>;
+}
+

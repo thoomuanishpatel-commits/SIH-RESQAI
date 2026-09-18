@@ -16,7 +16,10 @@ import {
   IncidentSeverity,
   BuildingLandmark,
   LiveUserLocation,
-  LocationCoords
+  LocationCoords,
+  DisasterReport,
+  DisasterCategory,
+  DisasterStatus
 } from '@/types';
 import {
   INITIAL_INCIDENTS,
@@ -27,7 +30,8 @@ import {
   INITIAL_ROADBLOCKS,
   INITIAL_RISKZONES,
   SIMULATION_SCENARIOS,
-  INITIAL_BUILDINGS
+  INITIAL_BUILDINGS,
+  INITIAL_DISASTER_REPORTS
 } from '@/data/demoData';
 import { sounds } from '@/lib/soundEffects';
 import { generateIncidentId } from '@/lib/utils';
@@ -117,6 +121,12 @@ interface EmergencyContextType {
   // Real Live User GPS Location
   userLiveLocation: LiveUserLocation | null;
   refreshUserLocation: () => Promise<LiveUserLocation | null>;
+
+  // Formal Disaster Reports
+  disasterReports: DisasterReport[];
+  submitDisasterReport: (data: Omit<DisasterReport, 'id' | 'status' | 'reportedAt' | 'statusHistory'>) => DisasterReport;
+  updateReportVerification: (reportId: string, decision: DisasterStatus, notes?: string, adminId?: string) => void;
+  getReportById: (id: string) => DisasterReport | undefined;
 }
 
 const EmergencyContext = createContext<EmergencyContextType | undefined>(undefined);
@@ -639,6 +649,192 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return () => clearInterval(timer);
   }, [isSimulationRunning, simulationScenario]);
 
+  // Formal Disaster Reports State & Supabase Persistence
+  const [disasterReports, setDisasterReports] = useState<DisasterReport[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('resqai_disaster_reports');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {
+        console.warn('LocalStorage load error for disaster reports:', e);
+      }
+    }
+    return INITIAL_DISASTER_REPORTS;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('resqai_disaster_reports', JSON.stringify(disasterReports));
+      } catch (e) {
+        console.warn('LocalStorage save error for disaster reports:', e);
+      }
+    }
+  }, [disasterReports]);
+
+  const submitDisasterReport = useCallback((data: Omit<DisasterReport, 'id' | 'status' | 'reportedAt' | 'statusHistory'>): DisasterReport => {
+    const randomNum = Math.floor(100000 + Math.random() * 900000);
+    const newId = `RSQ-2026-${randomNum}`;
+    const now = new Date().toISOString();
+
+    const newReport: DisasterReport = {
+      ...data,
+      id: newId,
+      status: 'UNDER_VERIFICATION',
+      reportedAt: now,
+      statusHistory: [
+        {
+          status: 'SUBMITTED',
+          timestamp: now,
+          actor: data.userId || 'CITIZEN',
+          notes: 'Disaster report submitted via verified citizen portal'
+        },
+        {
+          status: 'UNDER_VERIFICATION',
+          timestamp: now,
+          actor: 'SYSTEM_EOC_TRIAGE',
+          notes: 'Queued for human verification at EOC operations desk'
+        }
+      ]
+    };
+
+    setDisasterReports(prev => [newReport, ...prev]);
+
+    // Mirror to active incidents so maps, CAD, and responder fleets see it immediately
+    const mappedCategory = (
+      data.category === 'FIRE' ? 'FIRE' :
+      data.category === 'ROAD_ACCIDENT' ? 'ACCIDENT' :
+      data.category === 'FLOOD' ? 'FLOOD' :
+      data.category === 'BUILDING_COLLAPSE' ? 'COLLAPSE' :
+      data.category === 'GAS_LEAK' ? 'HAZARD' :
+      data.category === 'LANDSLIDE' ? 'HAZARD' :
+      data.category === 'SEVERE_STORM' ? 'FLOOD' : 'HAZARD'
+    ) as IncidentCategory;
+
+    createIncident({
+      id: newId,
+      type: mappedCategory,
+      title: data.title || `${data.category.replace('_', ' ')} EMERGENCY: ${data.location.address.split(',')[0]}`,
+      description: data.description,
+      severity: data.severity,
+      status: 'REPORTED',
+      location: {
+        lat: data.location.lat,
+        lng: data.location.lng,
+        address: data.location.address,
+        zone: data.location.zone || 'Citizen Reported Sector'
+      },
+      photoUrl: data.evidence?.anonymizedPreviewUrl || data.evidence?.previewUrl,
+      reportedVia: 'PHOTO'
+    });
+
+    // Sync to Supabase table 'disaster_reports'
+    try {
+      if (supabase) {
+        Promise.resolve(
+          supabase.from('disaster_reports').insert([
+            {
+              id: newId,
+              category: newReport.category,
+              title: newReport.title,
+              description: newReport.description,
+              severity: newReport.severity,
+              status: newReport.status,
+              latitude: newReport.location.lat,
+              longitude: newReport.location.lng,
+              address: newReport.location.address,
+              user_id: newReport.userId,
+              evidence_path: newReport.evidence?.imagePath,
+              ai_confidence: newReport.aiAnalysis?.confidence,
+              face_detected: newReport.faceMetadata?.faceDetected,
+              reported_at: now
+            }
+          ])
+        ).catch(err => {
+          console.info('Supabase disaster_reports insert note:', err);
+        });
+      }
+    } catch (e) {
+      console.warn('Supabase sync notice:', e);
+    }
+
+    return newReport;
+  }, [createIncident]);
+
+  const updateReportVerification = useCallback((
+    reportId: string,
+    decision: DisasterStatus,
+    notes?: string,
+    adminId: string = 'EOC_OFFICER_HYD'
+  ) => {
+    const now = new Date().toISOString();
+
+    setDisasterReports(prev =>
+      prev.map(r => {
+        if (r.id !== reportId) return r;
+
+        const isFalse = decision === 'FALSE_REPORT';
+        const updatedHistory = [
+          ...r.statusHistory,
+          {
+            status: decision,
+            timestamp: now,
+            actor: adminId,
+            notes: notes || `Admin updated status to ${decision}`
+          }
+        ];
+
+        return {
+          ...r,
+          status: decision,
+          adminVerification: {
+            adminId,
+            verifiedAt: now,
+            decision,
+            notes,
+            penaltyNoticeDisplayed: isFalse,
+            penaltyNoticeAmount: isFalse ? 5000 : 0
+          },
+          statusHistory: updatedHistory
+        };
+      })
+    );
+
+    // Sync with corresponding incident status
+    if (decision === 'VERIFIED') {
+      updateIncidentStatus(reportId, 'VERIFIED');
+    } else if (decision === 'DISPATCHED') {
+      updateIncidentStatus(reportId, 'DISPATCHED');
+    } else if (decision === 'RESOLVED' || decision === 'REJECTED' || decision === 'FALSE_REPORT') {
+      resolveIncident(reportId);
+    }
+
+    // Sync to Supabase
+    try {
+      if (supabase) {
+        Promise.resolve(
+          supabase
+            .from('disaster_reports')
+            .update({
+              status: decision,
+              verified_by: adminId,
+              verification_notes: notes,
+              verified_at: now
+            })
+            .eq('id', reportId)
+        ).catch(err => {
+          console.info('Supabase verification update note:', err);
+        });
+      }
+    } catch (e) {
+      console.warn('Supabase sync note:', e);
+    }
+  }, [updateIncidentStatus, resolveIncident]);
+
+  const getReportById = useCallback((id: string): DisasterReport | undefined => {
+    return disasterReports.find(r => r.id.toLowerCase() === id.toLowerCase());
+  }, [disasterReports]);
+
   const myActiveIncident = incidents.find(inc => inc.id === myActiveIncidentId) || null;
 
   return (
@@ -695,7 +891,11 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         logoutAdmin,
         autoDispatchedUnit,
         userLiveLocation,
-        refreshUserLocation
+        refreshUserLocation,
+        disasterReports,
+        submitDisasterReport,
+        updateReportVerification,
+        getReportById
       }}
     >
       {children}
