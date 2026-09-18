@@ -32,10 +32,10 @@ export default function AdminIncidentsPage() {
   const { disasterReports, updateReportVerification, incidents } = useEmergency();
 
   // Selected report
-  const [selectedReportId, setSelectedReportId] = useState<string>(
-    disasterReports[0]?.id || ''
-  );
-  const selectedReport = disasterReports.find(r => r.id === selectedReportId) || disasterReports[0];
+  const [selectedReportId, setSelectedReportId] = useState<string>('');
+
+  // Always keep selected report synced to user click, or latest report in queue
+  const selectedReport = (selectedReportId ? disasterReports.find(r => r.id === selectedReportId) : null) || disasterReports[0];
 
   // Privacy Face Anonymization Toggle (Default: Blurred for privacy protection)
   const [revealFaces, setRevealFaces] = useState<boolean>(false);
