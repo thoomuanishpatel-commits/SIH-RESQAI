@@ -47,7 +47,7 @@ export default function CitizenReportPage() {
       <div className="text-center space-y-2 mb-8">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs font-mono font-bold">
           <ShieldAlert className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
-          <span>OFFICIAL CITIZEN CRISIS INTAKE • TSDMA VERIFICATION GRID</span>
+          <span>OFFICIAL CITIZEN CRISIS INTAKE • RESQAI VERIFICATION GRID</span>
         </div>
         <h1 className="text-2xl sm:text-4xl font-black text-white uppercase tracking-tight font-mono">
           REPORT EMERGENCY &amp; DISASTER

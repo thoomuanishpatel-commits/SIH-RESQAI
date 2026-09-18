@@ -694,7 +694,7 @@ export const CitizenIncidentTracker: React.FC<CitizenIncidentTrackerProps> = ({
                                   {resp.unit.callsign} ({resp.unit.type})
                                 </div>
                                 <div className="text-[10px] text-slate-400">
-                                  Crew: {resp.unit.crewMembers?.slice(0, 2).join(', ') || resp.unit.driverName || 'TSDMA Squad'}
+                                  Crew: {resp.unit.crewMembers?.slice(0, 2).join(', ') || resp.unit.driverName || 'Emergency Squad'}
                                 </div>
                               </div>
                             </div>

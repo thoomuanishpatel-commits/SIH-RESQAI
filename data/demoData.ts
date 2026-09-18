@@ -333,7 +333,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'EMS',
     vehicleCategory: 'AMBULANCE_ALS',
     modelName: 'Mercedes-Benz Sprinter 416 CDI Mobile ICU',
-    plateNumber: 'TS 09 Z 1082',
+    plateNumber: 'ER 09 Z 1082',
     department: '108 GVK EMRI Advanced Critical Care',
     status: 'EN_ROUTE',
     location: {
@@ -360,7 +360,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'EMS',
     vehicleCategory: 'AMBULANCE_ALS',
     modelName: 'Force Traveller T1 Advanced Trauma Life Support',
-    plateNumber: 'TS 09 Z 1085',
+    plateNumber: 'ER 09 Z 1085',
     department: '108 Advanced Emergency Medical Response',
     status: 'ON_SCENE',
     location: {
@@ -387,7 +387,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'EMS',
     vehicleCategory: 'AMBULANCE_BLS',
     modelName: 'Tata Winger Emergency Medical Transport',
-    plateNumber: 'TS 09 Z 1088',
+    plateNumber: 'ER 09 Z 1088',
     department: '108 Emergency State Network',
     status: 'AVAILABLE',
     location: {
@@ -411,7 +411,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'EMS',
     vehicleCategory: 'AMBULANCE_ALS',
     modelName: 'Mercedes-Benz Sprinter Neonatal Intensive Care',
-    plateNumber: 'TS 09 Z 1101',
+    plateNumber: 'ER 09 Z 1101',
     department: 'Yashoda Emergency Pediatric Transport',
     status: 'AVAILABLE',
     location: {
@@ -435,7 +435,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'EMS',
     vehicleCategory: 'AMBULANCE_BUS',
     modelName: 'Ashok Leyland 12-Stretcher Disaster Evacuation Bus',
-    plateNumber: 'TS 09 Z 9914',
+    plateNumber: 'ER 09 Z 9914',
     department: 'Greater Hyderabad Disaster Management Wing',
     status: 'AVAILABLE',
     location: {
@@ -459,7 +459,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'EMS',
     vehicleCategory: 'AMBULANCE_BLS',
     modelName: 'Force Urbania Rapid Field Triage',
-    plateNumber: 'TS 09 Z 1019',
+    plateNumber: 'ER 09 Z 1019',
     department: 'Osmania General Emergency Wing',
     status: 'EN_ROUTE',
     location: {
@@ -488,8 +488,8 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'FIRE',
     vehicleCategory: 'FIRE_SKYLIFT',
     modelName: 'Volvo FM420 Bronto Skylift F54RLX (54m Aerial Platform)',
-    plateNumber: 'TS 09 F 0054',
-    department: 'Telangana State Disaster Response & Fire Services',
+    plateNumber: 'ER 09 F 0054',
+    department: 'National Disaster Response & Fire Services',
     status: 'EN_ROUTE',
     location: {
       lat: 17.4420,
@@ -515,7 +515,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'FIRE',
     vehicleCategory: 'FIRE_FOAM',
     modelName: 'Tata Prima 2828.K Heavy Foam & Water Cannon Engine',
-    plateNumber: 'TS 09 F 0001',
+    plateNumber: 'ER 09 F 0001',
     department: 'Hyderabad Central Fire Command',
     status: 'AVAILABLE',
     location: {
@@ -539,7 +539,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'FIRE',
     vehicleCategory: 'FIRE_ENGINE',
     modelName: 'Ashok Leyland Captain Multi-Purpose Fire Tender',
-    plateNumber: 'TS 09 F 0009',
+    plateNumber: 'ER 09 F 0009',
     department: 'Secunderabad Fire Division',
     status: 'EN_ROUTE',
     location: {
@@ -566,7 +566,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'FIRE',
     vehicleCategory: 'FIRE_FOAM',
     modelName: 'Scania P410 High-Expansion Chemical Foam Unit',
-    plateNumber: 'TS 09 F 0012',
+    plateNumber: 'ER 09 F 0012',
     department: 'Cyberabad Industrial Fire Wing',
     status: 'AVAILABLE',
     location: {
@@ -590,7 +590,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'FIRE',
     vehicleCategory: 'FIRE_ENGINE',
     modelName: 'Isuzu D-Max 4x4 High-Pressure Ultra-Mist Unit',
-    plateNumber: 'TS 09 F 0015',
+    plateNumber: 'ER 09 F 0015',
     department: 'Kukatpally Rapid Response Post',
     status: 'AVAILABLE',
     location: {
@@ -616,7 +616,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'POLICE',
     vehicleCategory: 'POLICE_INTERCEPTOR',
     modelName: 'Toyota Innova Crysta 2.8D High-Speed Highway Interceptor',
-    plateNumber: 'TS 09 P 0009',
+    plateNumber: 'ER 09 P 0009',
     department: 'Cyberabad Police Commissionerate',
     status: 'ON_SCENE',
     location: {
@@ -639,7 +639,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'POLICE',
     vehicleCategory: 'POLICE_PATROL',
     modelName: 'Mahindra Scorpio-N 4x4 Emergency Interceptor',
-    plateNumber: 'TS 09 P 0004',
+    plateNumber: 'ER 09 P 0004',
     department: 'Hyderabad South Zone Police',
     status: 'EN_ROUTE',
     location: {
@@ -664,7 +664,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'POLICE',
     vehicleCategory: 'POLICE_INTERCEPTOR',
     modelName: 'Mahindra Bolero Neo Traffic Clearing Interceptor',
-    plateNumber: 'TS 09 P 0011',
+    plateNumber: 'ER 09 P 0011',
     department: 'Hyderabad Traffic Police Flying Squad',
     status: 'AVAILABLE',
     location: {
@@ -686,7 +686,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'POLICE',
     vehicleCategory: 'POLICE_TACTICAL',
     modelName: 'Ashok Leyland Armored Riot & Emergency Carrier',
-    plateNumber: 'TS 09 P 0016',
+    plateNumber: 'ER 09 P 0016',
     department: 'City Armed Reserve & Quick Reaction Team',
     status: 'AVAILABLE',
     location: {
@@ -708,7 +708,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'POLICE',
     vehicleCategory: 'POLICE_TACTICAL',
     modelName: 'Force Traveller Mobile Drone & PTZ Camera Surveillance Mast',
-    plateNumber: 'TS 09 P 0020',
+    plateNumber: 'ER 09 P 0020',
     department: 'Hyderabad Police Cyber & Drone Command',
     status: 'AVAILABLE',
     location: {
@@ -732,7 +732,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'RESCUE',
     vehicleCategory: 'RESCUE_BOAT',
     modelName: 'Zodiac Milpro Grand Raid 470 Inflatable Powerboat Carrier',
-    plateNumber: 'TS 09 R 0007',
+    plateNumber: 'ER 09 R 0007',
     department: 'State Disaster Response Force (SDRF Flood Cell)',
     status: 'EN_ROUTE',
     location: {
@@ -758,7 +758,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'RESCUE',
     vehicleCategory: 'RESCUE_AMPHIBIOUS',
     modelName: 'MAN TGM 18.290 Heavy Structural Collapse Rescue Truck',
-    plateNumber: 'TS 09 R 0003',
+    plateNumber: 'ER 09 R 0003',
     department: 'Greater Hyderabad Disaster Management Wing',
     status: 'EN_ROUTE',
     location: {
@@ -783,7 +783,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'RESCUE',
     vehicleCategory: 'RESCUE_AMPHIBIOUS',
     modelName: 'Tata Xenon 4x4 Heavy Disaster Canine Squad',
-    plateNumber: 'TS 09 R 0010',
+    plateNumber: 'ER 09 R 0010',
     department: '10th Battalion NDRF Vijayawada-Hyderabad Command',
     status: 'AVAILABLE',
     location: {
@@ -805,7 +805,7 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'RESCUE',
     vehicleCategory: 'RESCUE_AMPHIBIOUS',
     modelName: 'Tatra 8x8 All-Terrain High-Water Evacuation Carrier',
-    plateNumber: 'TS 09 R 0018',
+    plateNumber: 'ER 09 R 0018',
     department: 'State Disaster Response Force Heavy Unit',
     status: 'AVAILABLE',
     location: {
@@ -829,8 +829,8 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
     type: 'HAZMAT',
     vehicleCategory: 'HAZMAT_DECON',
     modelName: 'BharatBenz 1617 Toxic Plume Decontamination Vehicle',
-    plateNumber: 'TS 09 H 0001',
-    department: 'Telangana Industrial Safety & Hazmat Command',
+    plateNumber: 'ER 09 H 0001',
+    department: 'Industrial Safety & Hazmat Command',
     status: 'AVAILABLE',
     location: {
       lat: 17.4490,
@@ -847,11 +847,11 @@ export const INITIAL_UNITS: EmergencyUnit[] = [
   },
   {
     id: 'UNIT-CMD-01',
-    callsign: 'Telangana Mobile EOC Bus 01',
+    callsign: 'Mobile EOC Bus 01',
     type: 'COMMAND_POST',
     vehicleCategory: 'MOBILE_EOC',
     modelName: 'Volvo 9600 Custom Mobile Emergency Operations Center',
-    plateNumber: 'TS 09 C 0001',
+    plateNumber: 'ER 09 C 0001',
     department: 'State Disaster Management Authority (SDMA)',
     status: 'AVAILABLE',
     location: {

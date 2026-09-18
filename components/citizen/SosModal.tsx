@@ -210,7 +210,7 @@ export const SosModal: React.FC = () => {
         location: {
           lat: userLiveLocation?.lat || 17.4483,
           lng: userLiveLocation?.lng || 78.3915,
-          address: userLiveLocation?.address || 'Kukatpally, Hyderabad, Telangana, India',
+          address: userLiveLocation?.address || 'Kukatpally, Hyderabad, India',
           zone: userLiveLocation?.zone || 'Hyderabad Crisis Grid',
           accuracy: userLiveLocation?.accuracy || 5,
           source: 'DEVICE_GPS'

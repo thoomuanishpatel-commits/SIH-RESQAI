@@ -537,7 +537,7 @@ export const PalantirCommandCenter: React.FC = () => {
                 </div>
                 {sidebarExpanded && (
                   <div className="overflow-hidden whitespace-nowrap">
-                    <div className="text-xs font-black text-white tracking-wider">TSDMA RESQAI</div>
+                    <div className="text-xs font-black text-white tracking-wider">RESQAI COMMAND</div>
                     <div className="text-[8px] text-cyan-400">TACTICAL COMMAND</div>
                   </div>
                 )}

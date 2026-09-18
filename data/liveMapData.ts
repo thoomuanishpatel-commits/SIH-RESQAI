@@ -66,7 +66,7 @@ export interface CityPreset {
 }
 
 export const CITIES_DATA: CityPreset[] = [
-  { id: 'hyderabad', name: 'Hyderabad', center: [78.3850, 17.4450], zoom: 12.5, state: 'Telangana' },
+  { id: 'hyderabad', name: 'Hyderabad', center: [78.3850, 17.4450], zoom: 12.5, state: 'South Region' },
   { id: 'bengaluru', name: 'Bengaluru', center: [77.5946, 12.9716], zoom: 12.2, state: 'Karnataka' },
   { id: 'delhi', name: 'Delhi NCR', center: [77.2090, 28.6139], zoom: 12.0, state: 'Delhi' },
   { id: 'mumbai', name: 'Mumbai', center: [72.8777, 19.0760], zoom: 12.0, state: 'Maharashtra' },

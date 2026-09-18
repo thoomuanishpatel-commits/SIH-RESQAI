@@ -98,7 +98,7 @@ export const CitizenPortalView: React.FC<CitizenPortalViewProps> = ({ initialInc
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold tracking-tight">TSDMA ResQAI</span>
+                <span className="text-sm font-bold tracking-tight">ResQAI Command</span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 font-bold flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span>Live Public Channel</span>
@@ -163,7 +163,7 @@ export const CitizenPortalView: React.FC<CitizenPortalViewProps> = ({ initialInc
             </span>
           </div>
           <span className="hidden md:inline text-[10px] px-2 py-0.5 rounded bg-black/20 uppercase font-black shrink-0">
-            TSDMA CRISIS BULLETIN
+            EMERGENCY CRISIS BULLETIN
           </span>
         </div>
       </div>

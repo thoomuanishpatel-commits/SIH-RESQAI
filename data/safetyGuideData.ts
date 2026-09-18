@@ -2301,7 +2301,7 @@ export const QUICK_DISASTER_SAFETY_GUIDES: Record<string, QuickDisasterSafetyGui
     dos: [
       'Move immediately to designated high ground or upper floors of RCC buildings.',
       'Turn off main electrical breaker and gas supplies before water reaches home.',
-      'Monitor official TSDMA/IMD sirens, radio, and mobile crisis alerts.',
+      'Monitor official NDMA/IMD sirens, radio, and mobile crisis alerts.',
       'Keep your 72-hour waterproof emergency kit, power banks, and documents with you.',
       'Boil all tap water or use chlorine purification tablets before consumption.',
       'Use high-visibility whistles or flashlight signals to alert rescue boats.'

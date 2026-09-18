@@ -933,7 +933,7 @@ export const LeafletLiveMap: React.FC<LeafletLiveMapProps> = ({
                   <div className="text-[10px] space-y-0.5">
                     <div className="text-slate-400 text-[8px] uppercase tracking-wider font-semibold">VEHICLE CLASS & MODEL</div>
                     <div className="text-slate-100 font-bold text-xs">{unit.modelName || `${unit.type} Specialized Vehicle`}</div>
-                    <div className="text-sky-400 text-[9px] font-mono">REG: {unit.plateNumber || 'TS-09-POLICE'} • {unit.department}</div>
+                    <div className="text-sky-400 text-[9px] font-mono">REG: {unit.plateNumber || 'ER-09-POLICE'} • {unit.department}</div>
                   </div>
 
                   {/* Telemetry Grid */}
